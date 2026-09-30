@@ -32,7 +32,7 @@ exports.getStats = async (req, res) => {
 exports.getRecentLoans = async (req, res) => {
     try {
         const result = await db.execute(
-            "SELECT LOANID, MEMBERID, COPYID, ISSUEDATE, DUEDATE, RETURNDATE, STATUS FROM LOAN ORDER BY LOANID DESC FETCH NEXT 10 ROWS ONLY"
+            "SELECT LOANID, MEMBERID, COPYID, ISSUEDATE, DUEDATE, RETURNDATE, STATUS FROM LOAN ORDER BY LOANID DESC LIMIT 10"
         );
         res.json({ success: true, data: result.rows });
     } catch (error) {
@@ -43,7 +43,7 @@ exports.getRecentLoans = async (req, res) => {
 exports.getRecentReservations = async (req, res) => {
     try {
         const result = await db.execute(
-            "SELECT * FROM RESERVATION ORDER BY RESERVATIONDATE DESC FETCH NEXT 10 ROWS ONLY"
+            "SELECT * FROM RESERVATION ORDER BY RESERVATIONDATE DESC LIMIT 10"
         );
         res.json({ success: true, data: result.rows });
     } catch (error) {
@@ -54,7 +54,7 @@ exports.getRecentReservations = async (req, res) => {
 exports.getRecentBooks = async (req, res) => {
     try {
         const result = await db.execute(
-            "SELECT BOOKID, TITLE, ISBN, PUBLISHYEAR FROM BOOK ORDER BY BOOKID DESC FETCH NEXT 10 ROWS ONLY"
+            "SELECT BOOKID, TITLE, ISBN, PUBLISHYEAR FROM BOOK ORDER BY BOOKID DESC LIMIT 10"
         );
         res.json({ success: true, data: result.rows });
     } catch (error) {
@@ -64,7 +64,7 @@ exports.getRecentBooks = async (req, res) => {
 
 exports.getOverdueLoans = async (req, res) => {
     try {
-        const result = await db.execute("SELECT * FROM LOAN WHERE STATUS = 'Overdue' FETCH NEXT 20 ROWS ONLY");
+        const result = await db.execute("SELECT * FROM LOAN WHERE STATUS = 'Overdue' LIMIT 20");
         res.json({ success: true, data: result.rows });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

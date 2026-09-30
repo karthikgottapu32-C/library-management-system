@@ -10,7 +10,7 @@ module.exports = {
       max_memory_restart: '512M',
       env: {
         NODE_ENV: 'production',
-        PORT: 5000,
+        PORT: 8000,
         DB_USER: 'c##library_user',
         DB_PASSWORD: 'library_password',
         DB_CONNECTION_STRING: 'localhost:1521/FREE'

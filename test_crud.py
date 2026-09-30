@@ -1,6 +1,6 @@
 import urllib.request, json, urllib.error
 
-BASE = 'http://localhost:5000/api'
+BASE = 'http://localhost:8000/api'
 
 def req(method, path, body=None):
     url = BASE + path

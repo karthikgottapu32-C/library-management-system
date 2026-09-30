@@ -4,7 +4,7 @@ Tests every UI action against the live backend.
 """
 import urllib.request, urllib.error, urllib.parse, json, datetime, time
 
-BASE = 'http://localhost:5000/api'
+BASE = 'http://localhost:8000/api'
 PASS = 0; FAIL = 0; results = []
 
 def req(method, path, body=None):

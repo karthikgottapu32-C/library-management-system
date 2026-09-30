@@ -1,0 +1,18 @@
+LIBRARIANID,LIBRARIANNAME,PHONE,EMAIL,BRANCHID
+17,"Audit Lib 1790691587 Edited","555-8001","auditlib1790691587@lib.org",1
+1,"Amit Sharma","9123456780","amit.sharma@library.com",1
+2,"Neha Gupta","9123456781","neha.gupta@library.com",2
+3,"Chief Librarian 2","555-4002","chief2@lib.org",2
+4,"Assistant Lib 2","555-4102","asst2@lib.org",2
+5,"Chief Librarian 3","555-4003","chief3@lib.org",3
+6,"Assistant Lib 3","555-4103","asst3@lib.org",3
+7,"Chief Librarian 4","555-4004","chief4@lib.org",4
+8,"Assistant Lib 4","555-4104","asst4@lib.org",4
+9,"Chief Librarian 5","555-4005","chief5@lib.org",5
+10,"Assistant Lib 5","555-4105","asst5@lib.org",5
+11,"Sarah Mitchell","555-2101","smitchell@library.org",
+12,"James Thornton","555-2102","jthornton@library.org",
+13,"Emily Clarke","555-2103","eclarke@library.org",
+14,"Robert Nguyen","555-2104","rnguyen@library.org",
+15,"Priya Sharma","555-2105","psharma@library.org",
+16,"Daniel Osei","555-2106","dosei@library.org",

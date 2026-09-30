@@ -11,7 +11,6 @@ const allowedOrigins = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
     'https://khwp7hf3-5173.inc1.devtunnels.ms',
-    'http://localhost:5000',
     'http://localhost:3000',
     'http://localhost:8000',
     process.env.FRONTEND_URL
@@ -49,8 +48,13 @@ async function startup() {
         console.error('Failed to initialize database:', err);
         process.exit(1);
     }
-    app.listen(PORT, '0.0.0.0', () => {
+    const server = app.listen(PORT, '0.0.0.0');
+    server.once('listening', () => {
         console.log(`Server is running on 0.0.0.0:${PORT}`);
+    });
+    server.once('error', (err) => {
+        console.error(`Failed to listen on port ${PORT}:`, err.message);
+        shutdown(err);
     });
 }
 

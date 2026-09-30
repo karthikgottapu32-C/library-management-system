@@ -73,10 +73,12 @@ function DashboardContent() {
   const [recentBooks, setRecentBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const fetchData = async () => {
     setLoading(true);
     setHasError(false);
+    setErrorMessage('');
     try {
       const [s, l, b] = await Promise.all([
         api.get('/dashboard/stats').then(r => r.data?.data || {}),
@@ -88,6 +90,13 @@ function DashboardContent() {
       setRecentBooks(Array.isArray(b) ? b : []);
     } catch (e) {
       setHasError(true);
+      const response = e.response;
+      const detail = response?.data?.message;
+      setErrorMessage(detail
+        ? `Dashboard request failed: ${detail}`
+        : response
+          ? `Dashboard API returned HTTP ${response.status}. Check the backend and database connection.`
+          : 'Could not reach the backend through /api. Start the backend and confirm its database connection.');
     } finally {
       setLoading(false);
     }
@@ -109,7 +118,7 @@ function DashboardContent() {
   if (hasError) return (
     <div className="flex flex-col items-center justify-center h-64 gap-4">
       <AlertCircle className="w-10 h-10 text-red-400" />
-      <p className="text-white/60">Failed to load dashboard data.</p>
+      <p className="text-white/60 text-center max-w-2xl">{errorMessage || 'Failed to load dashboard data.'}</p>
       <button onClick={fetchData} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm transition-colors">
         <RefreshCw className="w-4 h-4" /> Retry
       </button>

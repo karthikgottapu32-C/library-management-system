@@ -32,7 +32,7 @@ pm2 list 2>nul
 echo.
 echo =========================================
 echo  DEPLOYED SUCCESSFULLY
-echo  Application URL: http://localhost:5000
+echo  Application URL: http://localhost:8000
 echo =========================================
 echo.
 pause

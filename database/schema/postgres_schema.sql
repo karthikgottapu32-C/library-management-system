@@ -1,0 +1,197 @@
+-- PostgreSQL Schema for Library Management System
+
+-- Drop tables if they exist
+DROP TABLE IF EXISTS PAYMENT CASCADE;
+DROP TABLE IF EXISTS FINE CASCADE;
+DROP TABLE IF EXISTS RESERVATION CASCADE;
+DROP TABLE IF EXISTS LOAN CASCADE;
+DROP TABLE IF EXISTS WRITTEN_BY CASCADE;
+DROP TABLE IF EXISTS BOOK_COPY CASCADE;
+DROP TABLE IF EXISTS BOOK CASCADE;
+DROP TABLE IF EXISTS LIBRARIAN CASCADE;
+DROP TABLE IF EXISTS BOOK_LOCATION CASCADE;
+DROP TABLE IF EXISTS LIBRARY_BRANCH CASCADE;
+DROP TABLE IF EXISTS MEMBER CASCADE;
+DROP TABLE IF EXISTS AUTHOR CASCADE;
+DROP TABLE IF EXISTS PUBLISHER CASCADE;
+DROP TABLE IF EXISTS CATEGORY CASCADE;
+DROP TABLE IF EXISTS SUPPLIER CASCADE;
+
+-- Independent Tables
+CREATE TABLE CATEGORY (
+    CategoryID SERIAL PRIMARY KEY,
+    CategoryName VARCHAR(100) NOT NULL,
+    Description VARCHAR(255)
+);
+
+CREATE TABLE PUBLISHER (
+    PublisherID SERIAL PRIMARY KEY,
+    PublisherName VARCHAR(100) NOT NULL,
+    Address VARCHAR(255),
+    Phone VARCHAR(20),
+    Email VARCHAR(100)
+);
+
+CREATE TABLE AUTHOR (
+    AuthorID SERIAL PRIMARY KEY,
+    AuthorName VARCHAR(100) NOT NULL,
+    Nationality VARCHAR(50),
+    Biography VARCHAR(1000)
+);
+
+CREATE TABLE MEMBER (
+    MemberID SERIAL PRIMARY KEY,
+    MemberName VARCHAR(100) NOT NULL,
+    Address VARCHAR(255),
+    Phone VARCHAR(20),
+    Email VARCHAR(100) UNIQUE,
+    MemberType VARCHAR(50),
+    DateJoined TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE LIBRARY_BRANCH (
+    BranchID SERIAL PRIMARY KEY,
+    BranchName VARCHAR(100) NOT NULL,
+    Address VARCHAR(255),
+    Phone VARCHAR(20)
+);
+
+CREATE TABLE SUPPLIER (
+    SupplierID SERIAL PRIMARY KEY,
+    SupplierName VARCHAR(100) NOT NULL,
+    Phone VARCHAR(20),
+    Email VARCHAR(100)
+);
+
+-- Dependent Tables
+CREATE TABLE BOOK_LOCATION (
+    LocationID SERIAL PRIMARY KEY,
+    LocationName VARCHAR(50) NOT NULL,
+    Description VARCHAR(255),
+    BranchID INTEGER,
+    CONSTRAINT fk_book_loc_branch FOREIGN KEY (BranchID) REFERENCES LIBRARY_BRANCH(BranchID)
+);
+
+CREATE TABLE LIBRARIAN (
+    LibrarianID SERIAL PRIMARY KEY,
+    LibrarianName VARCHAR(100) NOT NULL,
+    Phone VARCHAR(20),
+    Email VARCHAR(100) UNIQUE,
+    BranchID INTEGER,
+    CONSTRAINT fk_librarian_branch FOREIGN KEY (BranchID) REFERENCES LIBRARY_BRANCH(BranchID)
+);
+
+CREATE TABLE BOOK (
+    BookID SERIAL PRIMARY KEY,
+    ISBN VARCHAR(20) UNIQUE,
+    Title VARCHAR(255) NOT NULL,
+    CategoryID INTEGER,
+    PublisherID INTEGER,
+    Price NUMERIC(10,2),
+    Edition VARCHAR(50),
+    PublishYear INTEGER,
+    CONSTRAINT fk_book_category FOREIGN KEY (CategoryID) REFERENCES CATEGORY(CategoryID),
+    CONSTRAINT fk_book_publisher FOREIGN KEY (PublisherID) REFERENCES PUBLISHER(PublisherID)
+);
+
+CREATE TABLE WRITTEN_BY (
+    BookID INTEGER,
+    AuthorID INTEGER,
+    PRIMARY KEY (BookID, AuthorID),
+    CONSTRAINT fk_writtenby_book FOREIGN KEY (BookID) REFERENCES BOOK(BookID),
+    CONSTRAINT fk_writtenby_author FOREIGN KEY (AuthorID) REFERENCES AUTHOR(AuthorID)
+);
+
+CREATE TABLE BOOK_COPY (
+    CopyID SERIAL PRIMARY KEY,
+    BookID INTEGER,
+    BranchID INTEGER,
+    LocationID INTEGER,
+    AccessionNo VARCHAR(50) UNIQUE,
+    Status VARCHAR(50) CHECK (Status IN ('Available', 'Issued', 'Lost', 'Damaged')),
+    ShelfLocation VARCHAR(50),
+    DateAcquired TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_copy_book FOREIGN KEY (BookID) REFERENCES BOOK(BookID),
+    CONSTRAINT fk_copy_branch FOREIGN KEY (BranchID) REFERENCES LIBRARY_BRANCH(BranchID),
+    CONSTRAINT fk_copy_location FOREIGN KEY (LocationID) REFERENCES BOOK_LOCATION(LocationID)
+);
+
+CREATE TABLE LOAN (
+    LoanID SERIAL PRIMARY KEY,
+    MemberID INTEGER,
+    CopyID INTEGER,
+    LibrarianID INTEGER,
+    IssueDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    DueDate TIMESTAMP,
+    ReturnDate TIMESTAMP,
+    Status VARCHAR(50) CHECK (Status IN ('Active', 'Returned', 'Overdue')),
+    CONSTRAINT fk_loan_member FOREIGN KEY (MemberID) REFERENCES MEMBER(MemberID),
+    CONSTRAINT fk_loan_copy FOREIGN KEY (CopyID) REFERENCES BOOK_COPY(CopyID),
+    CONSTRAINT fk_loan_librarian FOREIGN KEY (LibrarianID) REFERENCES LIBRARIAN(LibrarianID)
+);
+
+CREATE TABLE RESERVATION (
+    ReservationID SERIAL PRIMARY KEY,
+    MemberID INTEGER,
+    BookID INTEGER,
+    ReservationDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Status VARCHAR(50) CHECK (Status IN ('Pending', 'Fulfilled', 'Cancelled')),
+    CONSTRAINT fk_res_member FOREIGN KEY (MemberID) REFERENCES MEMBER(MemberID),
+    CONSTRAINT fk_res_book FOREIGN KEY (BookID) REFERENCES BOOK(BookID)
+);
+
+CREATE TABLE FINE (
+    FineID SERIAL PRIMARY KEY,
+    LoanID INTEGER,
+    MemberID INTEGER,
+    FineAmount NUMERIC(10,2),
+    FineDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FineStatus VARCHAR(50) CHECK (FineStatus IN ('Unpaid', 'Paid')),
+    CONSTRAINT fk_fine_loan FOREIGN KEY (LoanID) REFERENCES LOAN(LoanID),
+    CONSTRAINT fk_fine_member FOREIGN KEY (MemberID) REFERENCES MEMBER(MemberID)
+);
+
+CREATE TABLE PAYMENT (
+    PaymentID SERIAL PRIMARY KEY,
+    FineID INTEGER,
+    MemberID INTEGER,
+    Amount NUMERIC(10,2),
+    PaymentDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PaymentMode VARCHAR(50),
+    CONSTRAINT fk_payment_fine FOREIGN KEY (FineID) REFERENCES FINE(FineID),
+    CONSTRAINT fk_payment_member FOREIGN KEY (MemberID) REFERENCES MEMBER(MemberID)
+);
+
+-- Business Logic Triggers
+
+-- 1. Auto-update Book Copy status when a Loan is issued or returned
+CREATE OR REPLACE FUNCTION func_update_copy_status()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.Status = 'Active' THEN
+        UPDATE BOOK_COPY SET Status = 'Issued' WHERE CopyID = NEW.CopyID;
+    ELSIF NEW.Status = 'Returned' THEN
+        UPDATE BOOK_COPY SET Status = 'Available' WHERE CopyID = NEW.CopyID;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_update_copy_status
+AFTER INSERT OR UPDATE OF Status ON LOAN
+FOR EACH ROW
+EXECUTE FUNCTION func_update_copy_status();
+
+-- 2. Auto-update Fine Status when Payment is made
+CREATE OR REPLACE FUNCTION func_update_fine_status()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE FINE SET FineStatus = 'Paid' WHERE FineID = NEW.FineID;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_update_fine_status
+AFTER INSERT ON PAYMENT
+FOR EACH ROW
+EXECUTE FUNCTION func_update_fine_status();

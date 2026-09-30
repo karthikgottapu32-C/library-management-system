@@ -1,0 +1,27 @@
+LOCATIONID,LOCATIONNAME,DESCRIPTION,BRANCHID
+26,"Audit Loc 1790691587 Edited","Test location",1
+1,"Shelf A1","Computer Science Section",1
+2,"Shelf B2","Fiction Section",1
+3,"Shelf C1","Science & Engineering",2
+4,"Children Corner","Books for young readers",1
+5,"Periodicals","Magazines and journals",1
+6,"Fiction Aisle","General fiction collection",2
+7,"Reference Section","Non-circulating reference",2
+8,"Science & Tech","STEM and computer books",2
+9,"Children Corner","Books for young readers",2
+10,"Periodicals","Magazines and journals",2
+11,"Fiction Aisle","General fiction collection",3
+12,"Reference Section","Non-circulating reference",3
+13,"Science & Tech","STEM and computer books",3
+14,"Children Corner","Books for young readers",3
+15,"Periodicals","Magazines and journals",3
+16,"Fiction Aisle","General fiction collection",4
+17,"Reference Section","Non-circulating reference",4
+18,"Science & Tech","STEM and computer books",4
+19,"Children Corner","Books for young readers",4
+20,"Periodicals","Magazines and journals",4
+21,"Fiction Aisle","General fiction collection",5
+22,"Reference Section","Non-circulating reference",5
+23,"Science & Tech","STEM and computer books",5
+24,"Children Corner","Books for young readers",5
+25,"Periodicals","Magazines and journals",5

@@ -4,7 +4,7 @@ Tests every entity CRUD + specific workflows.
 """
 import urllib.request, urllib.error, json, sys
 
-BASE = 'http://localhost:5000/api'
+BASE = 'http://localhost:8000/api'
 PASS = 0; FAIL = 0; results = []
 
 def req(method, path, body=None):

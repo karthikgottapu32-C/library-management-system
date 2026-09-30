@@ -3,7 +3,7 @@ Targeted verification of the 4 suspected-test-bug failures.
 """
 import urllib.request, urllib.error, urllib.parse, json
 
-BASE = 'http://localhost:5000/api'
+BASE = 'http://localhost:8000/api'
 
 def req(method, path, body=None):
     url = BASE + path

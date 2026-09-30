@@ -45,7 +45,7 @@ function isDateString(val) {
  */
 function colBind(colName, bindName, value) {
     if (DATE_COLUMNS.has(colName.toUpperCase()) && isDateString(value)) {
-        return { fragment: `TO_DATE(${bindName},'YYYY-MM-DD')`, val: value.trim() };
+        return { fragment: bindName, val: value.trim() };
     }
     return { fragment: bindName, val: value === '' ? null : value };
 }
@@ -74,7 +74,7 @@ exports.crud = (tableName, pkColumns) => {
                 if (req.query.search && req.query.search.trim()) {
                     const searchCols = SEARCH_COLUMNS[tableName.toUpperCase()];
                     if (searchCols && searchCols.length > 0) {
-                        const conditions = searchCols.map(col => `UPPER(${col}) LIKE '%' || UPPER(:search) || '%'`);
+                        const conditions = searchCols.map(col => `${col} ILIKE '%' || :search || '%'`);
                         filters.push(`(${conditions.join(' OR ')})`);
                         binds.search = req.query.search.trim();
                     }
@@ -86,14 +86,14 @@ exports.crud = (tableName, pkColumns) => {
                 const limit = parseInt(req.query.limit) || 100;
                 const offset = (page - 1) * limit;
 
-                sql += ` OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`;
+                sql += ` LIMIT :limit OFFSET :offset`;
                 binds.offset = offset;
                 binds.limit = limit;
 
                 const result = await db.execute(sql, binds);
                 res.json({ success: true, data: result.rows, page, limit });
             } catch (error) {
-                res.status(500).json({ success: false, message: error.message.replace(/ORA-\d+:/, 'Database Error:') });
+                res.status(500).json({ success: false, message: error.message });
             }
         },
 
@@ -117,7 +117,7 @@ exports.crud = (tableName, pkColumns) => {
                 if (result.rows.length === 0) return res.status(404).json({ success: false, message: 'Not found' });
                 res.json({ success: true, data: result.rows[0] });
             } catch (error) {
-                res.status(500).json({ success: false, message: error.message.replace(/ORA-\d+:/, 'Database Error:') });
+                res.status(500).json({ success: false, message: error.message });
             }
         },
 
@@ -153,11 +153,11 @@ exports.crud = (tableName, pkColumns) => {
                 res.status(201).json({ success: true, data: { inserted: result.rowsAffected } });
             } catch (error) {
                 let msg = error.message;
-                if (msg.includes('ORA-00001')) msg = 'A record with this unique key already exists.';
-                else if (msg.includes('ORA-02291')) msg = 'A referenced record (foreign key) does not exist. Check your ID values.';
-                else if (msg.includes('ORA-02290')) msg = 'A value violates a check constraint. Check allowed values (e.g., Status must be Active/Returned/Overdue).';
-                else if (msg.includes('ORA-01861')) msg = 'Invalid date format. Use YYYY-MM-DD (e.g., 2024-09-15).';
-                res.status(400).json({ success: false, message: msg.replace(/ORA-\d+: /, '') });
+                if (msg.includes('23505')) msg = 'A record with this unique key already exists.';
+                else if (msg.includes('23503')) msg = 'A referenced record (foreign key) does not exist. Check your ID values.';
+                else if (msg.includes('23514')) msg = 'A value violates a check constraint. Check allowed values (e.g., Status must be Active/Returned/Overdue).';
+                else if (msg.includes('22007')) msg = 'Invalid date format. Use YYYY-MM-DD (e.g., 2024-09-15).';
+                res.status(400).json({ success: false, message: msg });
             }
         },
 
@@ -198,11 +198,11 @@ exports.crud = (tableName, pkColumns) => {
                 res.json({ success: true, data: { updated: result.rowsAffected } });
             } catch (error) {
                 let msg = error.message;
-                if (msg.includes('ORA-00001')) msg = 'A record with this unique key already exists.';
-                else if (msg.includes('ORA-02291')) msg = 'A referenced record (foreign key) does not exist. Check your ID values.';
-                else if (msg.includes('ORA-02290')) msg = 'A value violates a check constraint. Check allowed values.';
-                else if (msg.includes('ORA-01861')) msg = 'Invalid date format. Use YYYY-MM-DD (e.g., 2024-09-15).';
-                res.status(400).json({ success: false, message: msg.replace(/ORA-\d+: /, '') });
+                if (msg.includes('23505')) msg = 'A record with this unique key already exists.';
+                else if (msg.includes('23503')) msg = 'A referenced record (foreign key) does not exist. Check your ID values.';
+                else if (msg.includes('23514')) msg = 'A value violates a check constraint. Check allowed values.';
+                else if (msg.includes('22007')) msg = 'Invalid date format. Use YYYY-MM-DD (e.g., 2024-09-15).';
+                res.status(400).json({ success: false, message: msg });
             }
         },
 
@@ -227,10 +227,10 @@ exports.crud = (tableName, pkColumns) => {
                 res.json({ success: true, data: { deleted: result.rowsAffected } });
             } catch (error) {
                 let msg = error.message;
-                if (msg.includes('ORA-02292')) {
+                if (msg.includes('23503')) {
                     msg = 'Cannot delete — this record is referenced by other records (e.g. loans, copies, or fines). Remove dependent records first.';
                 }
-                res.status(400).json({ success: false, message: msg.replace(/ORA-\d+: /, '') });
+                res.status(400).json({ success: false, message: msg });
             }
         }
     };

@@ -6,7 +6,8 @@ const dashboard = require('../controllers/dashboardController');
 
 async function getHealthResponse(req, res) {
     try {
-        await db.execute('SELECT 1 FROM DUAL');
+        const healthQuery = process.env.DATABASE_URL ? 'SELECT 1' : 'SELECT 1';
+        await db.execute(healthQuery);
         res.json({ status: 'ok', database: 'connected' });
     } catch (e) {
         res.status(500).json({ status: 'error', database: 'disconnected' });

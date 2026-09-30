@@ -63,14 +63,14 @@ body {
 `);
 
 // .env
-fs.writeFileSync(path.join(__dirname, 'frontend', '.env'), `VITE_API_URL=http://localhost:5000/api\n`);
+fs.writeFileSync(path.join(__dirname, 'frontend', '.env'), `VITE_API_BASE_URL=/api\n`);
 
 // src/services/api.js
 fs.writeFileSync(path.join(srcDir, 'services', 'api.js'), `
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api'
 });
 
 export default api;

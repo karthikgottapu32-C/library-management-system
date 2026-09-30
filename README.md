@@ -39,25 +39,27 @@ The database contains all 15 required entities:
    @../data/authors.sql
    ```
 
-## Backend (Node.js)
-1. Navigate to the `backend` folder.
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Create a `.env` file with your Oracle credentials:
-   ```
-   ORACLE_USER=sys
-   ORACLE_PASSWORD=your_password
-   ORACLE_CONNECT_STRING=localhost:1521/XEPDB1
-   PORT=5000
-   ```
-4. Start the server:
-   ```bash
-   npm start
-   ```
+## Local Development
+Install backend and frontend dependencies once:
 
-## Frontend (React)
-The frontend uses Tailwind CSS matching your visual specifications (dark sidebar, light content, stat cards, modern tables).
+```bash
+npm install --prefix=backend
+npm install --prefix=frontend
+```
 
-*(Note: The full scaffold is in progress. To complete all React components for the 15 entities, we will build them iteratively in the next steps.)*
+Configure `backend/.env` with `DATABASE_URL` for the current PostgreSQL backend. Keep the local backend port at `8000`.
+
+Start the backend in Terminal 1 from the project root:
+
+```bash
+npm start --prefix=backend
+```
+
+Start Vite in Terminal 2:
+
+```bash
+cd frontend
+npm run dev
+```
+
+Open `http://localhost:5173`. Frontend API requests use `/api`, which Vite proxies to `http://localhost:8000`.

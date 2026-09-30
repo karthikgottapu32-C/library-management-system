@@ -8,11 +8,5 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: FRONTEND_URL
-        sync: false
-      - key: ORACLE_USER
-        sync: false
-      - key: ORACLE_PASSWORD
-        sync: false
-      - key: ORACLE_CONNECTION_STRING
+      - key: DATABASE_URL
         sync: false
