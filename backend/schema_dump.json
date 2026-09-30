@@ -1,0 +1,737 @@
+{
+  "CATEGORY": {
+    "columns": [
+      [
+        "CATEGORYID",
+        "NUMBER",
+        "N",
+        null
+      ],
+      [
+        "CATEGORYNAME",
+        "VARCHAR2",
+        "N",
+        null
+      ],
+      [
+        "DESCRIPTION",
+        "VARCHAR2",
+        "Y",
+        null
+      ]
+    ],
+    "pks": [
+      "CATEGORYID"
+    ],
+    "fks": [],
+    "chks": [
+      "\"CATEGORYNAME\" IS NOT NULL"
+    ]
+  },
+  "PUBLISHER": {
+    "columns": [
+      [
+        "PUBLISHERID",
+        "NUMBER",
+        "N",
+        null
+      ],
+      [
+        "PUBLISHERNAME",
+        "VARCHAR2",
+        "N",
+        null
+      ],
+      [
+        "ADDRESS",
+        "VARCHAR2",
+        "Y",
+        null
+      ],
+      [
+        "PHONE",
+        "VARCHAR2",
+        "Y",
+        null
+      ],
+      [
+        "EMAIL",
+        "VARCHAR2",
+        "Y",
+        null
+      ]
+    ],
+    "pks": [
+      "PUBLISHERID"
+    ],
+    "fks": [],
+    "chks": [
+      "\"PUBLISHERNAME\" IS NOT NULL"
+    ]
+  },
+  "AUTHOR": {
+    "columns": [
+      [
+        "AUTHORID",
+        "NUMBER",
+        "N",
+        null
+      ],
+      [
+        "AUTHORNAME",
+        "VARCHAR2",
+        "N",
+        null
+      ],
+      [
+        "NATIONALITY",
+        "VARCHAR2",
+        "Y",
+        null
+      ],
+      [
+        "BIOGRAPHY",
+        "VARCHAR2",
+        "Y",
+        null
+      ]
+    ],
+    "pks": [
+      "AUTHORID"
+    ],
+    "fks": [],
+    "chks": [
+      "\"AUTHORNAME\" IS NOT NULL"
+    ]
+  },
+  "MEMBER": {
+    "columns": [
+      [
+        "MEMBERID",
+        "NUMBER",
+        "N",
+        null
+      ],
+      [
+        "MEMBERNAME",
+        "VARCHAR2",
+        "N",
+        null
+      ],
+      [
+        "ADDRESS",
+        "VARCHAR2",
+        "Y",
+        null
+      ],
+      [
+        "PHONE",
+        "VARCHAR2",
+        "Y",
+        null
+      ],
+      [
+        "EMAIL",
+        "VARCHAR2",
+        "Y",
+        null
+      ],
+      [
+        "MEMBERTYPE",
+        "VARCHAR2",
+        "Y",
+        null
+      ],
+      [
+        "DATEJOINED",
+        "DATE",
+        "Y",
+        "SYSDATE\n"
+      ]
+    ],
+    "pks": [
+      "MEMBERID"
+    ],
+    "fks": [],
+    "chks": [
+      "\"MEMBERNAME\" IS NOT NULL"
+    ]
+  },
+  "LIBRARY_BRANCH": {
+    "columns": [
+      [
+        "BRANCHID",
+        "NUMBER",
+        "N",
+        null
+      ],
+      [
+        "BRANCHNAME",
+        "VARCHAR2",
+        "N",
+        null
+      ],
+      [
+        "ADDRESS",
+        "VARCHAR2",
+        "Y",
+        null
+      ],
+      [
+        "PHONE",
+        "VARCHAR2",
+        "Y",
+        null
+      ]
+    ],
+    "pks": [
+      "BRANCHID"
+    ],
+    "fks": [],
+    "chks": [
+      "\"BRANCHNAME\" IS NOT NULL"
+    ]
+  },
+  "SUPPLIER": {
+    "columns": [
+      [
+        "SUPPLIERID",
+        "NUMBER",
+        "N",
+        null
+      ],
+      [
+        "SUPPLIERNAME",
+        "VARCHAR2",
+        "N",
+        null
+      ],
+      [
+        "PHONE",
+        "VARCHAR2",
+        "Y",
+        null
+      ],
+      [
+        "EMAIL",
+        "VARCHAR2",
+        "Y",
+        null
+      ]
+    ],
+    "pks": [
+      "SUPPLIERID"
+    ],
+    "fks": [],
+    "chks": [
+      "\"SUPPLIERNAME\" IS NOT NULL"
+    ]
+  },
+  "BOOK_LOCATION": {
+    "columns": [
+      [
+        "LOCATIONID",
+        "NUMBER",
+        "N",
+        null
+      ],
+      [
+        "LOCATIONNAME",
+        "VARCHAR2",
+        "N",
+        null
+      ],
+      [
+        "DESCRIPTION",
+        "VARCHAR2",
+        "Y",
+        null
+      ],
+      [
+        "BRANCHID",
+        "NUMBER",
+        "Y",
+        null
+      ]
+    ],
+    "pks": [
+      "LOCATIONID"
+    ],
+    "fks": [
+      [
+        "BRANCHID",
+        "LIBRARY_BRANCH",
+        "BRANCHID"
+      ]
+    ],
+    "chks": [
+      "\"LOCATIONNAME\" IS NOT NULL"
+    ]
+  },
+  "LIBRARIAN": {
+    "columns": [
+      [
+        "LIBRARIANID",
+        "NUMBER",
+        "N",
+        null
+      ],
+      [
+        "LIBRARIANNAME",
+        "VARCHAR2",
+        "N",
+        null
+      ],
+      [
+        "PHONE",
+        "VARCHAR2",
+        "Y",
+        null
+      ],
+      [
+        "EMAIL",
+        "VARCHAR2",
+        "Y",
+        null
+      ],
+      [
+        "BRANCHID",
+        "NUMBER",
+        "Y",
+        null
+      ]
+    ],
+    "pks": [
+      "LIBRARIANID"
+    ],
+    "fks": [
+      [
+        "BRANCHID",
+        "LIBRARY_BRANCH",
+        "BRANCHID"
+      ]
+    ],
+    "chks": [
+      "\"LIBRARIANNAME\" IS NOT NULL"
+    ]
+  },
+  "BOOK": {
+    "columns": [
+      [
+        "BOOKID",
+        "NUMBER",
+        "N",
+        null
+      ],
+      [
+        "ISBN",
+        "VARCHAR2",
+        "Y",
+        null
+      ],
+      [
+        "TITLE",
+        "VARCHAR2",
+        "N",
+        null
+      ],
+      [
+        "CATEGORYID",
+        "NUMBER",
+        "Y",
+        null
+      ],
+      [
+        "PUBLISHERID",
+        "NUMBER",
+        "Y",
+        null
+      ],
+      [
+        "PRICE",
+        "NUMBER",
+        "Y",
+        null
+      ],
+      [
+        "EDITION",
+        "VARCHAR2",
+        "Y",
+        null
+      ],
+      [
+        "PUBLISHYEAR",
+        "NUMBER",
+        "Y",
+        null
+      ]
+    ],
+    "pks": [
+      "BOOKID"
+    ],
+    "fks": [
+      [
+        "CATEGORYID",
+        "CATEGORY",
+        "CATEGORYID"
+      ],
+      [
+        "PUBLISHERID",
+        "PUBLISHER",
+        "PUBLISHERID"
+      ]
+    ],
+    "chks": [
+      "\"TITLE\" IS NOT NULL"
+    ]
+  },
+  "WRITTEN_BY": {
+    "columns": [
+      [
+        "BOOKID",
+        "NUMBER",
+        "N",
+        null
+      ],
+      [
+        "AUTHORID",
+        "NUMBER",
+        "N",
+        null
+      ]
+    ],
+    "pks": [
+      "BOOKID",
+      "AUTHORID"
+    ],
+    "fks": [
+      [
+        "BOOKID",
+        "BOOK",
+        "BOOKID"
+      ],
+      [
+        "AUTHORID",
+        "AUTHOR",
+        "AUTHORID"
+      ]
+    ],
+    "chks": []
+  },
+  "BOOK_COPY": {
+    "columns": [
+      [
+        "COPYID",
+        "NUMBER",
+        "N",
+        null
+      ],
+      [
+        "BOOKID",
+        "NUMBER",
+        "Y",
+        null
+      ],
+      [
+        "BRANCHID",
+        "NUMBER",
+        "Y",
+        null
+      ],
+      [
+        "LOCATIONID",
+        "NUMBER",
+        "Y",
+        null
+      ],
+      [
+        "ACCESSIONNO",
+        "VARCHAR2",
+        "Y",
+        null
+      ],
+      [
+        "STATUS",
+        "VARCHAR2",
+        "Y",
+        null
+      ],
+      [
+        "SHELFLOCATION",
+        "VARCHAR2",
+        "Y",
+        null
+      ],
+      [
+        "DATEACQUIRED",
+        "DATE",
+        "Y",
+        "SYSDATE"
+      ]
+    ],
+    "pks": [
+      "COPYID"
+    ],
+    "fks": [
+      [
+        "BOOKID",
+        "BOOK",
+        "BOOKID"
+      ],
+      [
+        "BRANCHID",
+        "LIBRARY_BRANCH",
+        "BRANCHID"
+      ],
+      [
+        "LOCATIONID",
+        "BOOK_LOCATION",
+        "LOCATIONID"
+      ]
+    ],
+    "chks": [
+      "Status IN ('Available', 'Issued', 'Lost', 'Damaged')"
+    ]
+  },
+  "LOAN": {
+    "columns": [
+      [
+        "LOANID",
+        "NUMBER",
+        "N",
+        null
+      ],
+      [
+        "MEMBERID",
+        "NUMBER",
+        "Y",
+        null
+      ],
+      [
+        "COPYID",
+        "NUMBER",
+        "Y",
+        null
+      ],
+      [
+        "LIBRARIANID",
+        "NUMBER",
+        "Y",
+        null
+      ],
+      [
+        "ISSUEDATE",
+        "DATE",
+        "Y",
+        "SYSDATE"
+      ],
+      [
+        "DUEDATE",
+        "DATE",
+        "Y",
+        null
+      ],
+      [
+        "RETURNDATE",
+        "DATE",
+        "Y",
+        null
+      ],
+      [
+        "STATUS",
+        "VARCHAR2",
+        "Y",
+        null
+      ]
+    ],
+    "pks": [
+      "LOANID"
+    ],
+    "fks": [
+      [
+        "MEMBERID",
+        "MEMBER",
+        "MEMBERID"
+      ],
+      [
+        "COPYID",
+        "BOOK_COPY",
+        "COPYID"
+      ],
+      [
+        "LIBRARIANID",
+        "LIBRARIAN",
+        "LIBRARIANID"
+      ]
+    ],
+    "chks": [
+      "Status IN ('Active', 'Returned', 'Overdue')"
+    ]
+  },
+  "RESERVATION": {
+    "columns": [
+      [
+        "RESERVATIONID",
+        "NUMBER",
+        "N",
+        null
+      ],
+      [
+        "MEMBERID",
+        "NUMBER",
+        "Y",
+        null
+      ],
+      [
+        "BOOKID",
+        "NUMBER",
+        "Y",
+        null
+      ],
+      [
+        "RESERVATIONDATE",
+        "DATE",
+        "Y",
+        "SYSDATE"
+      ],
+      [
+        "STATUS",
+        "VARCHAR2",
+        "Y",
+        null
+      ]
+    ],
+    "pks": [
+      "RESERVATIONID"
+    ],
+    "fks": [
+      [
+        "MEMBERID",
+        "MEMBER",
+        "MEMBERID"
+      ],
+      [
+        "BOOKID",
+        "BOOK",
+        "BOOKID"
+      ]
+    ],
+    "chks": [
+      "Status IN ('Pending', 'Fulfilled', 'Cancelled')"
+    ]
+  },
+  "FINE": {
+    "columns": [
+      [
+        "FINEID",
+        "NUMBER",
+        "N",
+        null
+      ],
+      [
+        "LOANID",
+        "NUMBER",
+        "Y",
+        null
+      ],
+      [
+        "MEMBERID",
+        "NUMBER",
+        "Y",
+        null
+      ],
+      [
+        "FINEAMOUNT",
+        "NUMBER",
+        "Y",
+        null
+      ],
+      [
+        "FINEDATE",
+        "DATE",
+        "Y",
+        "SYSDATE"
+      ],
+      [
+        "FINESTATUS",
+        "VARCHAR2",
+        "Y",
+        null
+      ]
+    ],
+    "pks": [
+      "FINEID"
+    ],
+    "fks": [
+      [
+        "LOANID",
+        "LOAN",
+        "LOANID"
+      ],
+      [
+        "MEMBERID",
+        "MEMBER",
+        "MEMBERID"
+      ]
+    ],
+    "chks": [
+      "FineStatus IN ('Unpaid', 'Paid')"
+    ]
+  },
+  "PAYMENT": {
+    "columns": [
+      [
+        "PAYMENTID",
+        "NUMBER",
+        "N",
+        null
+      ],
+      [
+        "FINEID",
+        "NUMBER",
+        "Y",
+        null
+      ],
+      [
+        "MEMBERID",
+        "NUMBER",
+        "Y",
+        null
+      ],
+      [
+        "AMOUNT",
+        "NUMBER",
+        "Y",
+        null
+      ],
+      [
+        "PAYMENTDATE",
+        "DATE",
+        "Y",
+        "SYSDATE"
+      ],
+      [
+        "PAYMENTMODE",
+        "VARCHAR2",
+        "Y",
+        null
+      ]
+    ],
+    "pks": [
+      "PAYMENTID"
+    ],
+    "fks": [
+      [
+        "FINEID",
+        "FINE",
+        "FINEID"
+      ],
+      [
+        "MEMBERID",
+        "MEMBER",
+        "MEMBERID"
+      ]
+    ],
+    "chks": []
+  }
+}

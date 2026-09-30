@@ -1,0 +1,19 @@
+﻿SET DEFINE OFF;
+BEGIN
+    FOR i IN 1..30 LOOP
+        BEGIN
+            INSERT INTO PAYMENT (FINEID, PAYMENTDATE, AMOUNT, PAYMENTMODE)
+            VALUES (
+                (SELECT FINEID FROM (SELECT FINEID FROM FINE WHERE FINESTATUS = 'Paid' ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM = 1),
+                SYSDATE - DBMS_RANDOM.VALUE(1, 10),
+                ROUND(DBMS_RANDOM.VALUE(5, 50)),
+                'Credit Card'
+            );
+        EXCEPTION
+            WHEN OTHERS THEN NULL;
+        END;
+    END LOOP;
+    COMMIT;
+END;
+/
+EXIT;

@@ -1,0 +1,180 @@
+-- Sequences for all tables
+CREATE SEQUENCE seq_category START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_publisher START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_author START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_member START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_branch START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_supplier START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_location START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_librarian START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_book START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_copy START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_loan START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_reservation START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_fine START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_payment START WITH 1 INCREMENT BY 1;
+
+-- Triggers for auto-increment PKs using sequences
+CREATE OR REPLACE TRIGGER trg_category
+BEFORE INSERT ON CATEGORY
+FOR EACH ROW
+BEGIN
+    IF :NEW.CategoryID IS NULL THEN
+        :NEW.CategoryID := seq_category.NEXTVAL;
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_publisher
+BEFORE INSERT ON PUBLISHER
+FOR EACH ROW
+BEGIN
+    IF :NEW.PublisherID IS NULL THEN
+        :NEW.PublisherID := seq_publisher.NEXTVAL;
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_author
+BEFORE INSERT ON AUTHOR
+FOR EACH ROW
+BEGIN
+    IF :NEW.AuthorID IS NULL THEN
+        :NEW.AuthorID := seq_author.NEXTVAL;
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_member
+BEFORE INSERT ON MEMBER
+FOR EACH ROW
+BEGIN
+    IF :NEW.MemberID IS NULL THEN
+        :NEW.MemberID := seq_member.NEXTVAL;
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_branch
+BEFORE INSERT ON LIBRARY_BRANCH
+FOR EACH ROW
+BEGIN
+    IF :NEW.BranchID IS NULL THEN
+        :NEW.BranchID := seq_branch.NEXTVAL;
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_supplier
+BEFORE INSERT ON SUPPLIER
+FOR EACH ROW
+BEGIN
+    IF :NEW.SupplierID IS NULL THEN
+        :NEW.SupplierID := seq_supplier.NEXTVAL;
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_location
+BEFORE INSERT ON BOOK_LOCATION
+FOR EACH ROW
+BEGIN
+    IF :NEW.LocationID IS NULL THEN
+        :NEW.LocationID := seq_location.NEXTVAL;
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_librarian
+BEFORE INSERT ON LIBRARIAN
+FOR EACH ROW
+BEGIN
+    IF :NEW.LibrarianID IS NULL THEN
+        :NEW.LibrarianID := seq_librarian.NEXTVAL;
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_book
+BEFORE INSERT ON BOOK
+FOR EACH ROW
+BEGIN
+    IF :NEW.BookID IS NULL THEN
+        :NEW.BookID := seq_book.NEXTVAL;
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_copy
+BEFORE INSERT ON BOOK_COPY
+FOR EACH ROW
+BEGIN
+    IF :NEW.CopyID IS NULL THEN
+        :NEW.CopyID := seq_copy.NEXTVAL;
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_loan
+BEFORE INSERT ON LOAN
+FOR EACH ROW
+BEGIN
+    IF :NEW.LoanID IS NULL THEN
+        :NEW.LoanID := seq_loan.NEXTVAL;
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_reservation
+BEFORE INSERT ON RESERVATION
+FOR EACH ROW
+BEGIN
+    IF :NEW.ReservationID IS NULL THEN
+        :NEW.ReservationID := seq_reservation.NEXTVAL;
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_fine
+BEFORE INSERT ON FINE
+FOR EACH ROW
+BEGIN
+    IF :NEW.FineID IS NULL THEN
+        :NEW.FineID := seq_fine.NEXTVAL;
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_payment
+BEFORE INSERT ON PAYMENT
+FOR EACH ROW
+BEGIN
+    IF :NEW.PaymentID IS NULL THEN
+        :NEW.PaymentID := seq_payment.NEXTVAL;
+    END IF;
+END;
+/
+
+-- Business Logic Triggers
+
+-- 1. Auto-update Book Copy status when a Loan is issued or returned
+CREATE OR REPLACE TRIGGER trg_update_copy_status
+AFTER INSERT OR UPDATE OF Status ON LOAN
+FOR EACH ROW
+BEGIN
+    IF :NEW.Status = 'Active' THEN
+        UPDATE BOOK_COPY SET Status = 'Issued' WHERE CopyID = :NEW.CopyID;
+    ELSIF :NEW.Status = 'Returned' THEN
+        UPDATE BOOK_COPY SET Status = 'Available' WHERE CopyID = :NEW.CopyID;
+    END IF;
+END;
+/
+
+-- 2. Auto-update Fine Status when Payment is made
+CREATE OR REPLACE TRIGGER trg_update_fine_status
+AFTER INSERT ON PAYMENT
+FOR EACH ROW
+BEGIN
+    UPDATE FINE SET FineStatus = 'Paid' WHERE FineID = :NEW.FineID;
+END;
+/
