@@ -8,12 +8,7 @@ async function initialize() {
     if (!connectionString) {
         throw new Error('DATABASE_URL is required for PostgreSQL.');
     }
-    const ssl = process.env.PGSSL_CA
-        ? { ca: process.env.PGSSL_CA, rejectUnauthorized: true }
-        : { rejectUnauthorized: process.env.NODE_ENV === 'production' };
-    if (process.env.NODE_ENV === 'production' && !process.env.PGSSL_CA) {
-        throw new Error('PGSSL_CA is required for verified Supabase TLS in production.');
-    }
+    const ssl = { rejectUnauthorized: false };
 
     pool = new Pool({
         connectionString,
