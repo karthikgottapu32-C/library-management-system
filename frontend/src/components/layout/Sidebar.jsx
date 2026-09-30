@@ -19,8 +19,7 @@ const navGroups = [
       { path: '/book-copies', label: 'Book Copies', icon: BookCopy },
       { path: '/authors', label: 'Authors', icon: Users },
       { path: '/categories', label: 'Categories', icon: Tags },
-      { path: '/publishers', label: 'Publishers', icon: Building2 },
-      { path: '/written-by', label: 'Written By', icon: PenTool },
+      { path: '/publishers', label: 'Publishers', icon: Building2 }
     ]
   },
   {
@@ -37,8 +36,6 @@ const navGroups = [
     label: 'Administration',
     items: [
       { path: '/librarians', label: 'Librarians', icon: Briefcase },
-      { path: '/library-branches', label: 'Branches', icon: LibraryBig },
-      { path: '/book-locations', label: 'Locations', icon: MapPin },
       { path: '/suppliers', label: 'Suppliers', icon: Truck },
     ]
   }
