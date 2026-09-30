@@ -20,7 +20,7 @@ export const schemas = {
       { key: 'TITLE', label: 'Title', type: 'text', required: true },
       { key: 'ISBN', label: 'ISBN', type: 'text' },
       { key: 'AUTHOR_IDS', label: 'Author(s)', type: 'reference', endpoint: 'authors', valueKey: 'AUTHORID', labelKey: 'AUTHORNAME', multiple: true },
-      { key: 'CATEGORYID', label: 'Category', type: 'reference', endpoint: 'categories', valueKey: 'CATEGORYID', labelKey: 'CATEGORYNAME', required: true },
+      { key: 'CATEGORYNAME', label: 'Category Name (Type existing or new)', type: 'text', required: true },
       { key: 'PUBLISHERID', label: 'Publisher', type: 'reference', endpoint: 'publishers', valueKey: 'PUBLISHERID', labelKey: 'PUBLISHERNAME', required: true },
       { key: 'PRICE', label: 'Price', type: 'number' },
       { key: 'EDITION', label: 'Edition', type: 'select', options: ['1st','2nd','3rd','4th','5th'] },
