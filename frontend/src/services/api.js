@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { getSupabaseClient } from './supabase';
 
 const apiBaseUrl = import.meta.env.PROD
     ? '/api'
@@ -10,11 +9,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use(async (config) => {
-    const { data, error } = await getSupabaseClient().auth.getSession();
-    if (error) throw error;
-    if (data.session?.access_token) {
-        config.headers.Authorization = `Bearer ${data.session.access_token}`;
-    }
+    // Authentication headers have been removed for simple login.
     return config;
 });
 
