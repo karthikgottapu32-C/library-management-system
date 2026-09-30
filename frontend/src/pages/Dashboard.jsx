@@ -70,6 +70,7 @@ function StatCard({ title, value, icon: Icon, gradient, delay }) {
 function DashboardContent() {
   const [stats, setStats] = useState(null);
   const [recentLoans, setRecentLoans] = useState([]);
+  const [recentBooks, setRecentBooks] = useState([]);
   
   const [loading, setLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
