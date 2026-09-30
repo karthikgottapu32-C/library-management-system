@@ -56,7 +56,7 @@ def main():
                 raise AssertionError(f'HTTP {status}: {data}')
             rows = data.get('data')
             if path == 'dashboard/stats':
-                if not isinstance(rows, dict) or rows.get('totalBooks', 0) <= 0 or rows.get('totalMembers', 0) <= 0:
+                if not isinstance(rows, dict) or int(rows.get('totalBooks', 0)) <= 0 or int(rows.get('totalMembers', 0)) <= 0:
                     raise AssertionError(f'Dashboard stats do not show imported books and members: {rows}')
             elif not isinstance(rows, list):
                 raise AssertionError(f'Expected a list response: {data}')

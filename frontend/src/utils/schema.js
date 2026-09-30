@@ -4,23 +4,24 @@ export const schemas = {
     title: 'Books',
     endpoint: 'books',
     pk: 'BOOKID',
+    filterBy: { key: 'CATEGORYID', label: 'Category', endpoint: 'categories', valueKey: 'CATEGORYID', labelKey: 'CATEGORYNAME' },
     columns: [
       { key: 'BOOKID', label: 'ID' },
+      { key: 'ISBN', label: 'ISBN' },
       { key: 'TITLE', label: 'Title' },
       { key: 'AUTHOR_NAMES', label: 'Authors' },
-      { key: 'ISBN', label: 'ISBN' },
-      { key: 'CATEGORYID', label: 'Category ID' },
-      { key: 'PUBLISHERID', label: 'Publisher ID' },
+      { key: 'CATEGORYNAME', label: 'Category' },
+      { key: 'PUBLISHERNAME', label: 'Publisher' },
       { key: 'PRICE', label: 'Price' },
       { key: 'EDITION', label: 'Edition' },
       { key: 'PUBLISHYEAR', label: 'Year' }
     ],
     form: [
       { key: 'TITLE', label: 'Title', type: 'text', required: true },
-      { key: 'AUTHOR_IDS', label: 'Author IDs (Comma separated e.g. 1, 2)', type: 'text' },
       { key: 'ISBN', label: 'ISBN', type: 'text' },
-      { key: 'CATEGORYID', label: 'Category ID', type: 'number', required: true },
-      { key: 'PUBLISHERID', label: 'Publisher ID', type: 'number', required: true },
+      { key: 'AUTHOR_IDS', label: 'Author(s)', type: 'reference', endpoint: 'authors', valueKey: 'AUTHORID', labelKey: 'AUTHORNAME', multiple: true },
+      { key: 'CATEGORYID', label: 'Category', type: 'reference', endpoint: 'categories', valueKey: 'CATEGORYID', labelKey: 'CATEGORYNAME', required: true },
+      { key: 'PUBLISHERID', label: 'Publisher', type: 'reference', endpoint: 'publishers', valueKey: 'PUBLISHERID', labelKey: 'PUBLISHERNAME', required: true },
       { key: 'PRICE', label: 'Price', type: 'number' },
       { key: 'EDITION', label: 'Edition', type: 'select', options: ['1st','2nd','3rd','4th','5th'] },
       { key: 'PUBLISHYEAR', label: 'Publish Year', type: 'number' }
@@ -84,6 +85,7 @@ export const schemas = {
     columns: [
       { key: 'PUBLISHERID', label: 'ID' },
       { key: 'PUBLISHERNAME', label: 'Name' },
+      { key: 'BOOKS_PUBLISHED', label: 'Books Published' },
       { key: 'PHONE', label: 'Phone' },
       { key: 'EMAIL', label: 'Email' },
       { key: 'ADDRESS', label: 'Address' }

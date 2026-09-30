@@ -61,6 +61,12 @@ entities.forEach(ent => {
         router.put('/authors/:id', ctrl.update);
         router.delete('/authors/:id', ctrl.delete);
         router.post('/authors', ctrl.create);
+    } else if (ent.route === 'publishers') {
+        router.get('/publishers', advanced.getPublishers);
+        router.get('/publishers/:id', ctrl.getById);
+        router.put('/publishers/:id', ctrl.update);
+        router.delete('/publishers/:id', ctrl.delete);
+        router.post('/publishers', ctrl.create);
     } else {
         router.get(`/${ent.route}`, ctrl.getAll);
         if (Array.isArray(ent.pk)) {

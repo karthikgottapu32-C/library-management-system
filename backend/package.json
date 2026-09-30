@@ -12,7 +12,8 @@
   },
   "scripts": {
     "start": "node src/server.js",
-    "migrate": "node import_pg.js"
+    "migrate": "node import_pg.js",
+    "verify": "node verify_pg.js"
   },
   "description": "",
   "keywords": [],

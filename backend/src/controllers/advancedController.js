@@ -9,11 +9,15 @@ exports.getBooks = async (req, res) => {
         const sql = `
             SELECT 
                 B.*, 
-                STRING_AGG(A.AuthorName, ', ') AS AUTHOR_NAMES
+                STRING_AGG(A.AuthorName, ', ') AS AUTHOR_NAMES,
+                C.CategoryName AS CATEGORYNAME,
+                P.PublisherName AS PUBLISHERNAME
             FROM BOOK B
             LEFT JOIN WRITTEN_BY WB ON B.BookID = WB.BookID
             LEFT JOIN AUTHOR A ON WB.AuthorID = A.AuthorID
-            GROUP BY B.BookID
+            LEFT JOIN CATEGORY C ON B.CategoryID = C.CategoryID
+            LEFT JOIN PUBLISHER P ON B.PublisherID = P.PublisherID
+            GROUP BY B.BookID, C.CategoryName, P.PublisherName
             ORDER BY B.BookID DESC
             LIMIT $1 OFFSET $2
         `;
@@ -120,5 +124,28 @@ exports.updateBook = async (req, res, next) => {
         res.json({ success: true, data: { updated: 1 } });
     } catch (error) {
         res.status(400).json({ success: false, message: error.message });
+    }
+};
+
+exports.getPublishers = async (req, res) => {
+    try {
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const limit = Math.min(500, Math.max(1, parseInt(req.query.limit, 10) || 100));
+        const offset = (page - 1) * limit;
+
+        const sql = `
+            SELECT 
+                P.*, 
+                STRING_AGG(B.Title, ', ') AS BOOKS_PUBLISHED
+            FROM PUBLISHER P
+            LEFT JOIN BOOK B ON P.PublisherID = B.PublisherID
+            GROUP BY P.PublisherID
+            ORDER BY P.PublisherID DESC
+            LIMIT $1 OFFSET $2
+        `;
+        const result = await db.execute(sql, [limit, offset]);
+        res.json({ success: true, data: result.rows, page, limit });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
 };

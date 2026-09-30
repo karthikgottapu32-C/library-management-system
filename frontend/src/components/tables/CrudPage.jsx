@@ -61,8 +61,12 @@ export default function CrudPage({ schema }) {
   const LIMIT = 50;
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [viewingItem, setViewingItem] = useState(null);
+  const [viewDetails, setViewDetails] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
+  const [refData, setRefData] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState(null);
 
@@ -86,6 +90,29 @@ export default function CrudPage({ schema }) {
       setLoading(false);
     }
   }, [schema.endpoint]);
+
+  
+  useEffect(() => {
+    const fetchRefs = async () => {
+      if (!schema.form) return;
+      const refs = schema.form.filter(f => f.type === 'reference');
+      const newRefData = { ...refData };
+      let changed = false;
+      for (const ref of refs) {
+        if (!newRefData[ref.endpoint]) {
+          try {
+            const res = await api.get('/' + ref.endpoint + '?limit=1000');
+            newRefData[ref.endpoint] = res.data.data || [];
+            changed = true;
+          } catch (e) {
+            console.error('Failed to fetch ref', ref.endpoint);
+          }
+        }
+      }
+      if (changed) setRefData(newRefData);
+    };
+    fetchRefs();
+  }, [schema]);
 
   useEffect(() => {
     setPage(1);
@@ -274,6 +301,23 @@ export default function CrudPage({ schema }) {
                   ))}
                   <td className="px-5 py-3">
                     <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      
+                      <button
+                        onClick={() => {
+                          setViewingItem(item);
+                          setViewModalOpen(true);
+                          // Fetch extra details if needed, e.g. for books
+                          if (schema.endpoint === 'books') {
+                            api.get(`/book-copies?BOOKID=${item.BOOKID}`).then(res => {
+                              setViewDetails(res.data.data);
+                            });
+                          }
+                        }}
+                        className="p-1.5 rounded-lg text-indigo-400 hover:bg-indigo-500/10 transition-colors interactive"
+                        title="View Details"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
                       <button
                         onClick={() => openModal(item)}
                         className="p-1.5 rounded-lg text-indigo-400 hover:bg-indigo-500/10 transition-colors interactive"
@@ -318,6 +362,78 @@ export default function CrudPage({ schema }) {
           </div>
         </div>
       </div>
+
+      
+      {/* View Modal */}
+      <AnimatePresence>
+        {viewModalOpen && viewingItem && (
+          <div className="fixed inset-0 flex items-center justify-center z-[9996] p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => { setViewModalOpen(false); setViewingItem(null); setViewDetails(null); }}
+              className="absolute inset-0 backdrop-blur-sm"
+              style={{ background: 'rgba(0,0,0,0.7)' }}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+              className="relative z-10 w-full max-w-lg rounded-2xl overflow-hidden flex flex-col max-h-[88vh]"
+              style={{ background: 'rgba(12,12,24,0.98)', border: '1px solid rgba(255,255,255,0.1)' }}
+            >
+              <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <h3 className="font-semibold text-white flex items-center gap-2">
+                  <div className="w-1.5 h-5 rounded-full" style={{ background: 'linear-gradient(to bottom,#10b981,#34d399)' }} />
+                  {schema.title} Details
+                </h3>
+                <button
+                  onClick={() => { setViewModalOpen(false); setViewingItem(null); setViewDetails(null); }}
+                  className="p-1.5 rounded-lg text-white/30 hover:text-white hover:bg-white/5 transition-colors interactive"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="overflow-y-auto px-6 py-5 space-y-4">
+                {schema.columns.map(col => (
+                  <div key={col.key} className="flex flex-col">
+                    <span className="text-xs text-white/40 uppercase tracking-wider">{col.label}</span>
+                    <span className="text-sm text-white/90 mt-1">{viewingItem[col.key] || '-'}</span>
+                  </div>
+                ))}
+                
+                {/* Custom details injection */}
+                {schema.endpoint === 'books' && viewDetails && (
+                  <div className="mt-6 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    <h4 className="text-sm font-semibold text-white mb-3">Inventory & Copies</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-white/5 p-3 rounded-lg border border-white/10">
+                        <div className="text-xs text-white/40 mb-1">Total Physical Copies</div>
+                        <div className="text-lg text-white font-bold">{viewDetails.length}</div>
+                      </div>
+                      <div className="bg-emerald-500/10 p-3 rounded-lg border border-emerald-500/20">
+                        <div className="text-xs text-emerald-400/70 mb-1">Available Copies</div>
+                        <div className="text-lg text-emerald-400 font-bold">
+                          {viewDetails.filter(c => c.STATUS === 'Available').length}
+                        </div>
+                      </div>
+                      <div className="bg-amber-500/10 p-3 rounded-lg border border-amber-500/20">
+                        <div className="text-xs text-amber-400/70 mb-1">Issued Copies</div>
+                        <div className="text-lg text-amber-400 font-bold">
+                          {viewDetails.filter(c => c.STATUS === 'Issued').length}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Modal */}
       <AnimatePresence>
@@ -369,7 +485,33 @@ export default function CrudPage({ schema }) {
                           {f.label}
                           {f.required && <span className="text-red-400 ml-1">*</span>}
                         </label>
-                        {f.type === 'select' ? (
+                        
+                        {f.type === 'reference' ? (
+                          <select
+                            multiple={f.multiple}
+                            required={f.required}
+                            disabled={isDisabledOnEdit}
+                            className="w-full rounded-xl px-3 py-2 text-sm text-white/80 focus:outline-none transition-all disabled:opacity-30 disabled:cursor-not-allowed custom-scrollbar"
+                            style={{ ...fieldStyle, minHeight: f.multiple ? '100px' : '36px' }}
+                            value={formData[f.key] || (f.multiple ? [] : '')}
+                            onChange={e => {
+                              if (f.multiple) {
+                                const values = Array.from(e.target.selectedOptions, option => option.value);
+                                setFormData({ ...formData, [f.key]: values.join(',') });
+                              } else {
+                                setFormData({ ...formData, [f.key]: e.target.value });
+                              }
+                            }}
+                          >
+                            {!f.multiple && <option value="" style={{ background: '#0c0c18' }}>-- Select {f.label} --</option>}
+                            {(refData[f.endpoint] || []).map(opt => (
+                              <option key={opt[f.valueKey]} value={opt[f.valueKey]} style={{ background: '#0c0c18', padding: '4px' }}>
+                                {opt[f.labelKey]}
+                              </option>
+                            ))}
+                          </select>
+                        ) : f.type === 'select' ? (
+
                           <select
                             required={f.required}
                             disabled={isDisabledOnEdit}

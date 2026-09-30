@@ -33,11 +33,19 @@ npm run migrate --prefix backend
 
 The importer applies the PostgreSQL schema, imports all CSV rows in one transaction, preserves source statuses while loading, synchronizes serial sequences, checks all row totals, and commits only after every check passes. Do not run it against an existing populated project.
 
+After import, verify the live project without changing it:
+
+```powershell
+npm run verify --prefix backend
+```
+
+The verifier compares the exported primary/composite keys against PostgreSQL and checks the 15 primary keys, 18 foreign keys, and two application triggers. Additional cloud rows are reported; missing exported keys fail verification.
+
 ## Render Deployment
 
 `render.yaml` defines an always-on Starter web service in Singapore. Render uses the repository root, installs dependencies reproducibly, builds Vite, starts Express, and monitors `/api/health`. Set `DATABASE_URL` as a secret environment variable in Render. Do not set a production `VITE_API_BASE_URL`; the production bundle uses same-origin `/api`.
 
-Render service creation and Supabase account access require a human login and billing decision. Render will display the actual public URL after deployment; this repository does not yet have an assigned public service URL.
+Render service creation and Supabase account access require a human login and billing decision. Configure `ADMIN_EMAILS` with the comma-separated email addresses allowed to use the system, and create those users privately in Supabase Auth. Render will display the actual public URL after deployment; this repository does not yet have an assigned public service URL.
 
 ## Read-Only Deployment Smoke Test
 

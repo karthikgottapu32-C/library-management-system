@@ -14,7 +14,11 @@ function getJwks(supabaseUrl) {
 
 module.exports = async function requireAuth(req, res, next) {
     const supabaseUrl = process.env.SUPABASE_URL;
-    if (!supabaseUrl) {
+    const allowedEmails = (process.env.ADMIN_EMAILS || '')
+        .split(',')
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean);
+    if (!supabaseUrl || allowedEmails.length === 0) {
         return res.status(503).json({ success: false, message: 'Authentication is not configured.' });
     }
 
@@ -32,6 +36,9 @@ module.exports = async function requireAuth(req, res, next) {
             issuer,
             audience: 'authenticated'
         });
+        if (!payload.email || !allowedEmails.includes(payload.email.toLowerCase())) {
+            return res.status(403).json({ success: false, message: 'Administrator access required.' });
+        }
         req.user = { id: payload.sub, email: payload.email };
         return next();
     } catch (error) {

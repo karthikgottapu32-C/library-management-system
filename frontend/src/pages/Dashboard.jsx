@@ -70,7 +70,7 @@ function StatCard({ title, value, icon: Icon, gradient, delay }) {
 function DashboardContent() {
   const [stats, setStats] = useState(null);
   const [recentLoans, setRecentLoans] = useState([]);
-  const [recentBooks, setRecentBooks] = useState([]);
+  
   const [loading, setLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -126,14 +126,13 @@ function DashboardContent() {
   );
 
   const statCards = [
-    { title: 'Total Books', value: stats?.totalBooks, icon: Book, gradient: 'linear-gradient(135deg,#6366f1,#818cf8)', delay: 0 },
+    { title: 'Total Books', value: stats?.totalBooks, icon: Library, gradient: 'linear-gradient(135deg,#3b82f6,#60a5fa)', delay: 0 },
     { title: 'Total Members', value: stats?.totalMembers, icon: Users, gradient: 'linear-gradient(135deg,#06b6d4,#22d3ee)', delay: 0.05 },
-    { title: 'Active Loans', value: stats?.activeLoans, icon: Calendar, gradient: 'linear-gradient(135deg,#10b981,#34d399)', delay: 0.1 },
-    { title: 'Overdue Loans', value: stats?.overdueLoans, icon: AlertCircle, gradient: 'linear-gradient(135deg,#ef4444,#f87171)', delay: 0.15 },
-    { title: 'Available Copies', value: stats?.availableCopies, icon: Bookmark, gradient: 'linear-gradient(135deg,#8b5cf6,#a78bfa)', delay: 0.2 },
-    { title: 'Issued Copies', value: stats?.issuedCopies, icon: BookCopy, gradient: 'linear-gradient(135deg,#f59e0b,#fbbf24)', delay: 0.25 },
-    { title: 'Unpaid Fines', value: stats?.outstandingFines, icon: DollarSign, gradient: 'linear-gradient(135deg,#ec4899,#f472b6)', delay: 0.3 },
-    { title: 'Publishers', value: stats?.totalPublishers, icon: Building, gradient: 'linear-gradient(135deg,#14b8a6,#2dd4bf)', delay: 0.35 },
+    { title: 'Available Copies', value: stats?.availableCopies, icon: Bookmark, gradient: 'linear-gradient(135deg,#8b5cf6,#a78bfa)', delay: 0.1 },
+    { title: 'Issued Copies', value: stats?.issuedCopies, icon: BookCopy, gradient: 'linear-gradient(135deg,#f59e0b,#fbbf24)', delay: 0.15 },
+    { title: 'Active Loans', value: stats?.activeLoans, icon: Calendar, gradient: 'linear-gradient(135deg,#10b981,#34d399)', delay: 0.2 },
+    { title: 'Overdue Loans', value: stats?.overdueLoans, icon: AlertCircle, gradient: 'linear-gradient(135deg,#ef4444,#f87171)', delay: 0.25 },
+    { title: 'Unpaid Fines', value: stats?.outstandingFines, icon: DollarSign, gradient: 'linear-gradient(135deg,#ec4899,#f472b6)', delay: 0.3 }
   ];
 
   const loanStatusColor = (status) => {
@@ -177,7 +176,7 @@ function DashboardContent() {
       </motion.div>
 
       {/* Tables row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         {/* Recent Loans */}
         <motion.div
           variants={tableVariants}
@@ -232,56 +231,7 @@ function DashboardContent() {
           </div>
         </motion.div>
 
-        {/* Recently Added Books */}
-        <motion.div
-          variants={tableVariants}
-          initial="hidden"
-          animate="visible"
-          transition={{ delay: 0.1 }}
-          className="rounded-2xl overflow-hidden"
-          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
-        >
-          <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white/80 flex items-center gap-2">
-              <Book className="w-4 h-4 text-indigo-400" /> Recently Added Books
-            </h2>
-            <span className="text-xs text-white/30">{recentBooks.length} records</span>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-[11px] uppercase tracking-wider text-white/30">
-                  <th className="px-6 py-3 text-left font-medium">Title</th>
-                  <th className="px-6 py-3 text-right font-medium">Year</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentBooks.length === 0 ? (
-                  <tr><td colSpan={2} className="px-6 py-10 text-center text-white/30">No books found</td></tr>
-                ) : recentBooks.map((b, i) => (
-                  <motion.tr
-                    key={b.BOOKID}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: i * 0.04 }}
-                    className="border-b border-white/[0.04] hover:bg-white/[0.03] transition-colors"
-                  >
-                    <td className="px-6 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-7 h-9 rounded-md flex items-center justify-center text-[10px] font-bold text-white/80 flex-shrink-0"
-                          style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }}>
-                          {b.TITLE ? b.TITLE.substring(0, 2).toUpperCase() : '??'}
-                        </div>
-                        <span className="text-white/80 font-medium truncate max-w-[200px]">{b.TITLE}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-3 text-white/40 text-right">{b.PUBLISHYEAR ?? '—'}</td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </motion.div>
+        
       </div>
     </div>
   );
