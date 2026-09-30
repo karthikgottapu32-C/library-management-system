@@ -81,7 +81,7 @@ function DashboardContent() {
     setErrorMessage('');
     try {
       const [s, l, b] = await Promise.all([
-        api.get('/dashboard/stats').then(r => r.data?.data || {}),
+        api.get('/dashboard/summary').then(r => r.data?.data || {}),
         api.get('/dashboard/recent-loans').then(r => r.data?.data || []),
         api.get('/dashboard/recent-books').then(r => r.data?.data || [])
       ]);
