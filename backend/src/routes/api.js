@@ -18,6 +18,20 @@ async function getHealthResponse(req, res) {
 router.get('/health', getHealthResponse);
 router.get('/status', getHealthResponse);
 
+// Simple College Demo Authentication Endpoint
+router.post('/auth/login', (req, res) => {
+    const { username, password } = req.body;
+    const adminUser = process.env.ADMIN_USERNAME || 'admin';
+    const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
+    
+    if (username === adminUser && password === adminPass) {
+        // Return a simple bearer token
+        res.json({ success: true, token: 'college-demo-token-123' });
+    } else {
+        res.status(401).json({ success: false, message: 'Invalid username or password' });
+    }
+});
+
 router.use(requireAuth);
 
 router.get('/dashboard/stats', dashboard.getStats);
@@ -41,7 +55,7 @@ const entities = [
     { route: 'publishers', table: 'PUBLISHER', pk: 'PublisherID' },
     { route: 'reservations', table: 'RESERVATION', pk: 'ReservationID' },
     { route: 'suppliers', table: 'SUPPLIER', pk: 'SupplierID' },
-    { route: 'written-by', table: 'WRITTEN_BY', pk: ['BookID', 'AuthorID'] } // COMPOSITE KEY
+    { route: 'written-by', table: 'WRITTEN_BY', pk: ['BookID', 'AuthorID'] }
 ];
 
 const advanced = require('../controllers/advancedController');

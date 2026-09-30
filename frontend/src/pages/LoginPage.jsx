@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, User } from 'lucide-react';
+import api from '../services/api';
 
 export default function LoginPage({ onLogin }) {
   const navigate = useNavigate();
@@ -9,15 +10,19 @@ export default function LoginPage({ onLogin }) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
     
-    if (username === 'admin' && password === 'admin123') {
-      localStorage.setItem('auth', 'true');
-      if (onLogin) onLogin();
-      navigate('/dashboard', { replace: true });
-    } else {
+    try {
+      const response = await api.post('/auth/login', { username, password });
+      if (response.data.success && response.data.token) {
+        localStorage.setItem('auth', 'true');
+        localStorage.setItem('token', response.data.token);
+        if (onLogin) onLogin();
+        navigate('/dashboard', { replace: true });
+      }
+    } catch (e) {
       setError('Invalid username or password.');
     }
   };
@@ -29,7 +34,7 @@ export default function LoginPage({ onLogin }) {
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/20 text-indigo-300">
             <Lock className="h-7 w-7" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Library Admin Login</h1>
+          <h1 className="text-2xl font-bold text-white">Library Management System Login</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -42,7 +47,7 @@ export default function LoginPage({ onLogin }) {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full bg-transparent text-white placeholder:text-white/30 focus:outline-none"
-                placeholder="admin"
+                placeholder="Username"
                 required
               />
             </div>
@@ -57,7 +62,7 @@ export default function LoginPage({ onLogin }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full bg-transparent text-white placeholder:text-white/30 focus:outline-none"
-                placeholder="admin123"
+                placeholder="Password"
                 required
               />
               <button
