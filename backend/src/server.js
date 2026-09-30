@@ -13,9 +13,9 @@ const allowedOrigins = [
     'https://khwp7hf3-5173.inc1.devtunnels.ms',
     'http://localhost:5000',
     'http://localhost:3000',
-    'http://localhost:8000'
-];
-
+    'http://localhost:8000',
+    process.env.FRONTEND_URL
+].filter(Boolean);
 app.use(cors({
     origin: function (origin, callback) {
         if (!origin || allowedOrigins.includes(origin)) {

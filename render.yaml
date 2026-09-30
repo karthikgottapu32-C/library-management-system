@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: library-management-system
+    runtime: node
+    plan: free
+    buildCommand: npm install --prefix=frontend && npm run build --prefix=frontend && npm install --prefix=backend
+    startCommand: npm start --prefix=backend
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_URL
+        sync: false
+      - key: ORACLE_USER
+        sync: false
+      - key: ORACLE_PASSWORD
+        sync: false
+      - key: ORACLE_CONNECTION_STRING
+        sync: false
