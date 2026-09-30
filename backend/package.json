@@ -7,11 +7,12 @@
     "csv-parse": "^7.0.3",
     "dotenv": "^16.6.1",
     "express": "^4.22.3",
-    "oracledb": "^6.10.0",
+    "jose": "^6.2.12",
     "pg": "^8.23.0"
   },
   "scripts": {
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "migrate": "node import_pg.js"
   },
   "description": "",
   "keywords": [],

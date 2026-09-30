@@ -2,11 +2,26 @@ services:
   - type: web
     name: library-management-system
     runtime: node
-    plan: free
-    buildCommand: npm install --prefix=frontend && npm run build --prefix=frontend && npm install --prefix=backend
+    plan: starter
+    region: singapore
+    buildCommand: npm ci --prefix=backend && npm ci --prefix=frontend && npm run build --prefix=frontend
     startCommand: npm start --prefix=backend
+    healthCheckPath: /api/health
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: 22.14.0
       - key: DATABASE_URL
         sync: false
+      - key: PGSSL_CA
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+      - key: PGPOOL_MAX
+        value: 5

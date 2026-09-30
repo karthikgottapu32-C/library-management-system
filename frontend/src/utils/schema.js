@@ -7,6 +7,7 @@ export const schemas = {
     columns: [
       { key: 'BOOKID', label: 'ID' },
       { key: 'TITLE', label: 'Title' },
+      { key: 'AUTHOR_NAMES', label: 'Authors' },
       { key: 'ISBN', label: 'ISBN' },
       { key: 'CATEGORYID', label: 'Category ID' },
       { key: 'PUBLISHERID', label: 'Publisher ID' },
@@ -16,6 +17,7 @@ export const schemas = {
     ],
     form: [
       { key: 'TITLE', label: 'Title', type: 'text', required: true },
+      { key: 'AUTHOR_IDS', label: 'Author IDs (Comma separated e.g. 1, 2)', type: 'text' },
       { key: 'ISBN', label: 'ISBN', type: 'text' },
       { key: 'CATEGORYID', label: 'Category ID', type: 'number', required: true },
       { key: 'PUBLISHERID', label: 'Publisher ID', type: 'number', required: true },
@@ -51,6 +53,7 @@ export const schemas = {
     columns: [
       { key: 'AUTHORID', label: 'ID' },
       { key: 'AUTHORNAME', label: 'Name' },
+      { key: 'BOOK_TITLES', label: 'Books Written' },
       { key: 'NATIONALITY', label: 'Nationality' },
       { key: 'BIOGRAPHY', label: 'Biography' }
     ],

@@ -4,104 +4,76 @@ require('dotenv').config();
 let pool;
 
 async function initialize() {
+    const connectionString = process.env.DATABASE_URL;
+    if (!connectionString) {
+        throw new Error('DATABASE_URL is required for PostgreSQL.');
+    }
+    const ssl = process.env.PGSSL_CA
+        ? { ca: process.env.PGSSL_CA, rejectUnauthorized: true }
+        : { rejectUnauthorized: process.env.NODE_ENV === 'production' };
+    if (process.env.NODE_ENV === 'production' && !process.env.PGSSL_CA) {
+        throw new Error('PGSSL_CA is required for verified Supabase TLS in production.');
+    }
+
+    pool = new Pool({
+        connectionString,
+        ssl,
+        max: Number(process.env.PGPOOL_MAX) || 5,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: Number(process.env.PGCONNECT_TIMEOUT_MS) || 10000,
+    });
+
+    pool.on('error', (err) => {
+        console.error('Unexpected PostgreSQL pool error:', err.message);
+    });
+
     try {
-        const connectionString = process.env.DATABASE_URL;
-
-        if (!connectionString) {
-            throw new Error('Set DATABASE_URL environment variable for PostgreSQL.');
-        }
-
-        // Add pgbouncer=true for Supabase pooler compatibility
-        const finalConnectionString = connectionString.includes('pgbouncer=true') 
-            ? connectionString 
-            : connectionString + (connectionString.includes('?') ? '&' : '?') + 'pgbouncer=true';
-
-        pool = new Pool({
-            connectionString: finalConnectionString,
-            ssl: {
-                rejectUnauthorized: false
-            },
-            max: 10, // Limit connections for free tier
-            idleTimeoutMillis: 30000,
-            connectionTimeoutMillis: 5000,
-        });
-
-        pool.on('error', (err, client) => {
-            console.error('Unexpected error on idle client', err.message);
-        });
-
-        // Test connection
-        try {
-            const client = await pool.connect();
-            await client.query('SELECT 1');
-            client.release();
-            console.log('PostgreSQL DB pool started');
-        } catch (e) {
-            console.warn('Initial DB ping failed (this can happen with poolers), continuing anyway...', e.message);
-        }
-
+        await pool.query('SELECT 1');
+        console.log('PostgreSQL connection verified');
     } catch (err) {
-        console.error('initialize() error:', err.message);
-        throw err;
+        await pool.end();
+        pool = undefined;
+        throw new Error(`PostgreSQL connection failed: ${err.message}`);
     }
 }
 
 async function close() {
-    try {
-        if (pool) {
-            await pool.end();
-            console.log('PostgreSQL DB pool closed');
-        }
-    } catch (err) {
-        console.error('close() error:', err.message);
+    if (pool) {
+        const currentPool = pool;
+        pool = undefined;
+        await currentPool.end();
+        console.log('PostgreSQL pool closed');
     }
 }
 
-/**
- * Compatibility wrapper to match oracledb signature.
- */
 async function execute(sql, binds = [], opts = {}) {
-    let client;
-    try {
-        client = await pool.connect();
-        
-        let pgSql = sql;
-        let pgBinds = [];
-
-        if (!Array.isArray(binds)) {
-            let i = 1;
-            pgSql = sql.replace(/:([a-zA-Z0-9_]+)/g, (match, p1) => {
-                pgBinds.push(binds[p1]);
-                return '$' + (i++);
-            });
-        } else {
-            pgBinds = binds;
-            pgSql = sql.replace(/:(\d+)/g, '$$$1');
-        }
-
-        const result = await client.query(pgSql, pgBinds);
-        
-        const rows = result.rows.map(row => {
-            const newRow = {};
-            for (let key in row) {
-                newRow[key.toUpperCase()] = row[key];
-            }
-            return newRow;
-        });
-
-        return {
-            rows: rows,
-            metaData: result.fields.map(f => ({ name: f.name.toUpperCase() })),
-            rowsAffected: result.rowCount
-        };
-    } catch (err) {
-        console.error('Execute error:', err.message);
-        throw err;
-    } finally {
-        if (client) {
-            client.release();
-        }
+    if (!pool) {
+        throw new Error('PostgreSQL pool is not initialized.');
     }
+
+    let pgSql = sql;
+    let pgBinds;
+    if (Array.isArray(binds)) {
+        pgBinds = binds;
+        pgSql = sql.replace(/:(\d+)/g, (_, position) => `$${position}`);
+    } else {
+        pgBinds = [];
+        pgSql = sql.replace(/:([a-zA-Z_][a-zA-Z0-9_]*)/g, (_, name) => {
+            pgBinds.push(binds[name]);
+            return `$${pgBinds.length}`;
+        });
+    }
+
+    const result = await pool.query(pgSql, pgBinds);
+    const rows = result.rows.map((row) => Object.fromEntries(
+        Object.entries(row).map(([key, value]) => [key.toUpperCase(), value])
+    ));
+
+    return {
+        rows,
+        metaData: result.fields.map((field) => ({ name: field.name.toUpperCase() })),
+        rowsAffected: result.rowCount,
+    };
 }
 
 module.exports = { initialize, close, execute };

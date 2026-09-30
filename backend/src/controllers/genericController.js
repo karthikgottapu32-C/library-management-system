@@ -6,6 +6,23 @@ const ALLOWED_TABLES = [
     'FINE', 'LIBRARIAN', 'LIBRARY_BRANCH', 'LOAN', 'MEMBER',
     'PAYMENT', 'PUBLISHER', 'RESERVATION', 'SUPPLIER', 'WRITTEN_BY'
 ];
+const TABLE_COLUMNS = {
+    AUTHOR: ['AUTHORID', 'AUTHORNAME', 'NATIONALITY', 'BIOGRAPHY'],
+    BOOK: ['BOOKID', 'ISBN', 'TITLE', 'CATEGORYID', 'PUBLISHERID', 'PRICE', 'EDITION', 'PUBLISHYEAR'],
+    BOOK_COPY: ['COPYID', 'BOOKID', 'BRANCHID', 'LOCATIONID', 'ACCESSIONNO', 'STATUS', 'SHELFLOCATION', 'DATEACQUIRED'],
+    BOOK_LOCATION: ['LOCATIONID', 'LOCATIONNAME', 'DESCRIPTION', 'BRANCHID'],
+    CATEGORY: ['CATEGORYID', 'CATEGORYNAME', 'DESCRIPTION'],
+    FINE: ['FINEID', 'LOANID', 'MEMBERID', 'FINEAMOUNT', 'FINEDATE', 'FINESTATUS'],
+    LIBRARIAN: ['LIBRARIANID', 'LIBRARIANNAME', 'PHONE', 'EMAIL', 'BRANCHID'],
+    LIBRARY_BRANCH: ['BRANCHID', 'BRANCHNAME', 'ADDRESS', 'PHONE'],
+    LOAN: ['LOANID', 'MEMBERID', 'COPYID', 'LIBRARIANID', 'ISSUEDATE', 'DUEDATE', 'RETURNDATE', 'STATUS'],
+    MEMBER: ['MEMBERID', 'MEMBERNAME', 'ADDRESS', 'PHONE', 'EMAIL', 'MEMBERTYPE', 'DATEJOINED'],
+    PAYMENT: ['PAYMENTID', 'FINEID', 'MEMBERID', 'AMOUNT', 'PAYMENTDATE', 'PAYMENTMODE'],
+    PUBLISHER: ['PUBLISHERID', 'PUBLISHERNAME', 'ADDRESS', 'PHONE', 'EMAIL'],
+    RESERVATION: ['RESERVATIONID', 'MEMBERID', 'BOOKID', 'RESERVATIONDATE', 'STATUS'],
+    SUPPLIER: ['SUPPLIERID', 'SUPPLIERNAME', 'PHONE', 'EMAIL'],
+    WRITTEN_BY: ['BOOKID', 'AUTHORID']
+};
 
 // Columns that support simple text search per table
 const SEARCH_COLUMNS = {
@@ -50,12 +67,25 @@ function colBind(colName, bindName, value) {
     return { fragment: bindName, val: value === '' ? null : value };
 }
 
+function normalizeBody(body, allowedColumns) {
+    const normalized = {};
+    for (const [key, value] of Object.entries(body)) {
+        const column = key.toUpperCase();
+        if (!allowedColumns.includes(column)) {
+            throw new Error(`Unknown column: ${key}`);
+        }
+        normalized[column] = value;
+    }
+    return normalized;
+}
+
 exports.crud = (tableName, pkColumns) => {
     if (!ALLOWED_TABLES.includes(tableName.toUpperCase())) {
         throw new Error('Invalid table name');
     }
 
-    const pks = Array.isArray(pkColumns) ? pkColumns : [pkColumns];
+    const pks = (Array.isArray(pkColumns) ? pkColumns : [pkColumns]).map((pk) => pk.toUpperCase());
+    const allowedColumns = TABLE_COLUMNS[tableName.toUpperCase()];
 
     return {
         getAll: async (req, res) => {
@@ -65,9 +95,13 @@ exports.crud = (tableName, pkColumns) => {
                 const filters = [];
 
                 for (const key of Object.keys(req.query)) {
-                    if (key !== 'page' && key !== 'limit' && key !== 'search' && !pks.includes(key)) {
-                        filters.push(`${key} = :${key}`);
-                        binds[key] = req.query[key];
+                    const column = key.toUpperCase();
+                    if (key !== 'page' && key !== 'limit' && key !== 'search' && !pks.includes(column)) {
+                        if (!allowedColumns.includes(column)) {
+                            return res.status(400).json({ success: false, message: `Unknown filter: ${key}` });
+                        }
+                        filters.push(`${column} = :${column}`);
+                        binds[column] = req.query[key];
                     }
                 }
 
@@ -82,8 +116,8 @@ exports.crud = (tableName, pkColumns) => {
 
                 if (filters.length > 0) sql += ' WHERE ' + filters.join(' AND ');
 
-                const page = parseInt(req.query.page) || 1;
-                const limit = parseInt(req.query.limit) || 100;
+                const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+                const limit = Math.min(500, Math.max(1, parseInt(req.query.limit, 10) || 100));
                 const offset = (page - 1) * limit;
 
                 sql += ` LIMIT :limit OFFSET :offset`;
@@ -123,7 +157,7 @@ exports.crud = (tableName, pkColumns) => {
 
         create: async (req, res) => {
             try {
-                const body = { ...req.body };
+                const body = normalizeBody(req.body, allowedColumns);
 
                 // Always remove single auto-generated PKs before INSERT — Oracle trigger assigns it
                 if (pks.length === 1) {
@@ -150,7 +184,7 @@ exports.crud = (tableName, pkColumns) => {
 
                 const sql = `INSERT INTO ${tableName} (${keys.join(',')}) VALUES (${fragments.join(',')})`;
                 const result = await db.execute(sql, vals, { autoCommit: true });
-                res.status(201).json({ success: true, data: { inserted: result.rowsAffected } });
+                res.status(201).json({ success: true, data: { inserted: result.rowsAffected, record: result.rows[0] } });
             } catch (error) {
                 let msg = error.message;
                 if (msg.includes('23505')) msg = 'A record with this unique key already exists.';
@@ -163,7 +197,7 @@ exports.crud = (tableName, pkColumns) => {
 
         update: async (req, res) => {
             try {
-                const body = { ...req.body };
+                const body = normalizeBody(req.body, allowedColumns);
 
                 // Strip PKs so they don't appear in SET clause
                 for (const pk of pks) {

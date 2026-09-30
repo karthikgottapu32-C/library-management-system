@@ -1,24 +1,28 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, User } from 'lucide-react';
+import { getSupabaseClient } from '../services/supabase';
 
-export default function LoginPage({ onLogin }) {
+export default function LoginPage() {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-
-    if (username === 'admin' && password === 'admin@123') {
-      onLogin();
+    setError('');
+    try {
+      const { error: authError } = await getSupabaseClient().auth.signInWithPassword({
+        email: username,
+        password
+      });
+      if (authError) throw authError;
       navigate('/dashboard', { replace: true });
-      return;
+    } catch (authError) {
+      setError(authError.message || 'Sign-in is not configured.');
     }
-
-    setError('Invalid username or password.');
   };
 
   return (
@@ -33,16 +37,17 @@ export default function LoginPage({ onLogin }) {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="mb-2 block text-sm text-white/70">Username</label>
+            <label className="mb-2 block text-sm text-white/70">Email</label>
             <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 px-3 py-2">
               <User className="h-4 w-4 text-white/40" />
               <input
-                type="text"
+                type="email"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full bg-transparent text-white placeholder:text-white/30 focus:outline-none"
-                placeholder="admin"
+                placeholder="name@example.com"
                 autoComplete="username"
+                required
               />
             </div>
           </div>
@@ -56,8 +61,9 @@ export default function LoginPage({ onLogin }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full bg-transparent text-white placeholder:text-white/30 focus:outline-none"
-                placeholder="admin@123"
+                placeholder="Password"
                 autoComplete="current-password"
+                required
               />
               <button
                 type="button"

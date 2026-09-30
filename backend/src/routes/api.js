@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../config/database');
 const generic = require('../controllers/genericController');
 const dashboard = require('../controllers/dashboardController');
+const requireAuth = require('../middleware/requireAuth');
 
 async function getHealthResponse(req, res) {
     try {
@@ -16,6 +17,8 @@ async function getHealthResponse(req, res) {
 
 router.get('/health', getHealthResponse);
 router.get('/status', getHealthResponse);
+
+router.use(requireAuth);
 
 router.get('/dashboard/stats', dashboard.getStats);
 router.get('/dashboard/recent-loans', dashboard.getRecentLoans);
@@ -41,21 +44,36 @@ const entities = [
     { route: 'written-by', table: 'WRITTEN_BY', pk: ['BookID', 'AuthorID'] } // COMPOSITE KEY
 ];
 
+const advanced = require('../controllers/advancedController');
+
 entities.forEach(ent => {
     const ctrl = generic.crud(ent.table, ent.pk);
-    router.get(`/${ent.route}`, ctrl.getAll);
     
-    // special handling for composite keys where we don't have a single /:id
-    if (Array.isArray(ent.pk)) {
-        router.get(`/${ent.route}/detail`, ctrl.getById);
-        router.put(`/${ent.route}/detail`, ctrl.update);
-        router.delete(`/${ent.route}/detail`, ctrl.delete);
+    if (ent.route === 'books') {
+        router.get('/books', advanced.getBooks);
+        router.get('/books/:id', ctrl.getById);
+        router.put('/books/:id', advanced.updateBook);
+        router.delete('/books/:id', ctrl.delete);
+        router.post('/books', advanced.createBook);
+    } else if (ent.route === 'authors') {
+        router.get('/authors', advanced.getAuthors);
+        router.get('/authors/:id', ctrl.getById);
+        router.put('/authors/:id', ctrl.update);
+        router.delete('/authors/:id', ctrl.delete);
+        router.post('/authors', ctrl.create);
     } else {
-        router.get(`/${ent.route}/:id`, ctrl.getById);
-        router.put(`/${ent.route}/:id`, ctrl.update);
-        router.delete(`/${ent.route}/:id`, ctrl.delete);
+        router.get(`/${ent.route}`, ctrl.getAll);
+        if (Array.isArray(ent.pk)) {
+            router.get(`/${ent.route}/detail`, ctrl.getById);
+            router.put(`/${ent.route}/detail`, ctrl.update);
+            router.delete(`/${ent.route}/detail`, ctrl.delete);
+        } else {
+            router.get(`/${ent.route}/:id`, ctrl.getById);
+            router.put(`/${ent.route}/:id`, ctrl.update);
+            router.delete(`/${ent.route}/:id`, ctrl.delete);
+        }
+        router.post(`/${ent.route}`, ctrl.create);
     }
-    router.post(`/${ent.route}`, ctrl.create);
 });
 
 module.exports = router;
