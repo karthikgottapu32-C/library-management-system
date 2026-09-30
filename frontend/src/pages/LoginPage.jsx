@@ -1,27 +1,24 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, User } from 'lucide-react';
-import { getSupabaseClient } from '../services/supabase';
 
-export default function LoginPage() {
+export default function LoginPage({ onLogin }) {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = (event) => {
     event.preventDefault();
     setError('');
-    try {
-      const { error: authError } = await getSupabaseClient().auth.signInWithPassword({
-        email: username,
-        password
-      });
-      if (authError) throw authError;
+    
+    if (username === 'admin' && password === 'admin123') {
+      localStorage.setItem('auth', 'true');
+      if (onLogin) onLogin();
       navigate('/dashboard', { replace: true });
-    } catch (authError) {
-      setError(authError.message || 'Sign-in is not configured.');
+    } else {
+      setError('Invalid username or password.');
     }
   };
 
@@ -37,16 +34,15 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="mb-2 block text-sm text-white/70">Email</label>
+            <label className="mb-2 block text-sm text-white/70">Username</label>
             <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 px-3 py-2">
               <User className="h-4 w-4 text-white/40" />
               <input
-                type="email"
+                type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full bg-transparent text-white placeholder:text-white/30 focus:outline-none"
-                placeholder="name@example.com"
-                autoComplete="username"
+                placeholder="admin"
                 required
               />
             </div>
@@ -61,15 +57,13 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full bg-transparent text-white placeholder:text-white/30 focus:outline-none"
-                placeholder="Password"
-                autoComplete="current-password"
+                placeholder="admin123"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
                 className="text-white/50 transition hover:text-white"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
