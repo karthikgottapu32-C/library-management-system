@@ -60,6 +60,8 @@ const entities = [
 
 const advanced = require('../controllers/advancedController');
 
+router.get('/search', advanced.globalSearch);
+
 entities.forEach(ent => {
     const ctrl = generic.crud(ent.table, ent.pk);
     

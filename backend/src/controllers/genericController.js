@@ -117,6 +117,10 @@ exports.crud = (tableName, pkColumns) => {
 
                 if (filters.length > 0) sql += ' WHERE ' + filters.join(' AND ');
 
+                if (pks.length > 0) {
+                    sql += ` ORDER BY ${pks[0]} DESC `;
+                }
+
                 const page = Math.max(1, parseInt(req.query.page, 10) || 1);
                 const limit = Math.min(500, Math.max(1, parseInt(req.query.limit, 10) || 100));
                 const offset = (page - 1) * limit;

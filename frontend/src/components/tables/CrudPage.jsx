@@ -238,7 +238,14 @@ export default function CrudPage({ schema }) {
               type="text"
               placeholder="Search…"
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={e => {
+                const val = e.target.value;
+                setSearch(val);
+                if (val === '') {
+                  setPage(1);
+                  fetchData('', 1);
+                }
+              }}
               className="w-full h-9 rounded-xl pl-9 pr-3 text-sm text-white/80 placeholder:text-white/20 focus:outline-none transition-all"
               style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
               onFocus={e => e.target.style.borderColor = 'rgba(99,102,241,0.5)'}
