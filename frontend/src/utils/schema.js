@@ -36,14 +36,12 @@ export const schemas = {
       { key: 'COPYID', label: 'Copy ID' },
       { key: 'BOOKID', label: 'Book ID' },
       { key: 'BRANCHID', label: 'Branch ID' },
-      { key: 'LOCATIONID', label: 'Location ID' },
       { key: 'ACCESSIONNO', label: 'Accession No' },
       { key: 'STATUS', label: 'Status' }
     ],
     form: [
       { key: 'BOOKID', label: 'Book ID', type: 'number', required: true },
       { key: 'BRANCHID', label: 'Branch ID', type: 'number', required: true },
-      { key: 'LOCATIONID', label: 'Location ID', type: 'number' },
       { key: 'ACCESSIONNO', label: 'Accession No', type: 'text' },
       { key: 'STATUS', label: 'Status', type: 'select', required: true, options: ['Available','Issued','Lost','Damaged'] }
     ]

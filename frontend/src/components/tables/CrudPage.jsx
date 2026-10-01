@@ -81,7 +81,12 @@ export default function CrudPage({ schema }) {
       const params = new URLSearchParams({ limit: LIMIT, page: pageNum });
       if (searchQuery.trim()) params.set('search', searchQuery.trim());
       const res = await api.get(`/${schema.endpoint}?${params}`);
-      const rows = res.data.data || [];
+      const rawRows = res.data.data || [];
+      const rows = rawRows.map(row => {
+          const newRow = {};
+          for (const key in row) newRow[key.toUpperCase()] = row[key];
+          return newRow;
+      });
       setData(rows);
       setHasMore(rows.length === LIMIT);
     } catch {
@@ -102,7 +107,12 @@ export default function CrudPage({ schema }) {
         if (!newRefData[ref.endpoint]) {
           try {
             const res = await api.get('/' + ref.endpoint + '?limit=1000');
-            newRefData[ref.endpoint] = res.data.data || [];
+            const rawRefs = res.data.data || [];
+            newRefData[ref.endpoint] = rawRefs.map(row => {
+                const newRow = {};
+                for (const key in row) newRow[key.toUpperCase()] = row[key];
+                return newRow;
+            });
             changed = true;
           } catch (e) {
             console.error('Failed to fetch ref', ref.endpoint);
