@@ -1,5 +1,3 @@
-import { useOutletContext } from 'react-router-dom';
-import { schemas } from '../utils/schema';
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -281,15 +279,10 @@ function DashboardContent({ module, schema }) {
   );
 }
 
-
-
-export default function Dashboard() {
-  const { activeModule } = useOutletContext();
-  const schema = schemas[activeModule];
-
+export default function Dashboard({ module, schema }) {
   return (
     <ErrorBoundary>
-      <DashboardContent module={activeModule} schema={schema} />
+      <DashboardContent module={module} schema={schema} />
     </ErrorBoundary>
   );
 }

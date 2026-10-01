@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 
-export default function Topbar({ onLogout, setActiveModule }) {
+export default function Topbar({ onLogout }) {
   const [connected, setConnected] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
@@ -84,9 +84,9 @@ export default function Topbar({ onLogout, setActiveModule }) {
   const handleResultClick = (result) => {
     setShowDropdown(false);
     setQuery('');
-    // Remove the leading slash (e.g. "/books" -> "books")
-    const mod = result.PATH.startsWith('/') ? result.PATH.slice(1) : result.PATH;
-    setActiveModule(mod);
+    // We navigate to the list page, and let the user see the context. 
+    // If they want to find the exact record, the table search will help them.
+    navigate(result.PATH);
   };
 
   return (
