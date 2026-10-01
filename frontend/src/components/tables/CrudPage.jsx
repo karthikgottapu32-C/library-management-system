@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Plus, Edit, Trash2, X, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, X, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 
 const STATUS_COLORS = {
   Active:     'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
