@@ -14,12 +14,13 @@ export const schemas = {
       { key: 'PUBLISHERNAME', label: 'Publisher' },
       { key: 'PRICE', label: 'Price' },
       { key: 'EDITION', label: 'Edition' },
-      { key: 'PUBLISHYEAR', label: 'Year' }
+      { key: 'PUBLISHYEAR', label: 'Year' },
+      { key: 'TOTAL_COPIES', label: 'Total Copies' }
     ],
     form: [
       { key: 'TITLE', label: 'Title', type: 'text', required: true },
       { key: 'ISBN', label: 'ISBN', type: 'text' },
-      { key: 'AUTHOR_IDS', label: 'Author(s)', type: 'reference', endpoint: 'authors', valueKey: 'AUTHORID', labelKey: 'AUTHORNAME', multiple: true },
+      { key: 'AUTHOR_NAMES', label: 'Author Name(s) (Comma separated for multiple)', type: 'text', required: true },
       { key: 'CATEGORYNAME', label: 'Category Name (Type existing or new)', type: 'text', required: true },
       { key: 'PUBLISHERID', label: 'Publisher', type: 'reference', endpoint: 'publishers', valueKey: 'PUBLISHERID', labelKey: 'PUBLISHERNAME', required: true },
       { key: 'PRICE', label: 'Price', type: 'number' },

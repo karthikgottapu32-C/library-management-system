@@ -27,7 +27,8 @@ exports.getBooks = async (req, res) => {
                 B.BookID AS BOOKID, B.ISBN, B.Title AS TITLE, B.CategoryID AS CATEGORYID, B.PublisherID AS PUBLISHERID, B.Price AS PRICE, B.Edition AS EDITION, B.PublishYear AS PUBLISHYEAR, 
                 STRING_AGG(A.AuthorName, ', ') AS AUTHOR_NAMES,
                 C.CategoryName AS CATEGORYNAME,
-                P.PublisherName AS PUBLISHERNAME
+                P.PublisherName AS PUBLISHERNAME,
+                (SELECT COUNT(*) FROM BOOK_COPY BC WHERE BC.BookID = B.BookID) AS TOTAL_COPIES
             FROM BOOK B
             LEFT JOIN WRITTEN_BY WB ON B.BookID = WB.BookID
             LEFT JOIN AUTHOR A ON WB.AuthorID = A.AuthorID
@@ -110,6 +111,18 @@ exports.getPublishers = async (req, res) => {
     }
 };
 
+async function getOrCreateAuthor(authorName) {
+    if (!authorName) return null;
+    const searchSql = `SELECT AuthorID FROM AUTHOR WHERE AuthorName ILIKE $1`;
+    const searchRes = await db.execute(searchSql, [authorName.trim()]);
+    if (searchRes.rows.length > 0) {
+        return searchRes.rows[0].AUTHORID || searchRes.rows[0].authorid;
+    }
+    const insertSql = `INSERT INTO AUTHOR (AuthorName) VALUES ($1) RETURNING AuthorID`;
+    const insertRes = await db.execute(insertSql, [authorName.trim()]);
+    return insertRes.rows[0].AUTHORID || insertRes.rows[0].authorid;
+}
+
 async function getOrCreateCategory(categoryName) {
     if (!categoryName) return null;
     const searchSql = `SELECT CategoryID FROM CATEGORY WHERE CategoryName ILIKE $1`;
@@ -123,8 +136,8 @@ async function getOrCreateCategory(categoryName) {
 }
 
 exports.createBook = async (req, res, next) => {
-    const authorIdsStr = req.body.AUTHOR_IDS;
-    delete req.body.AUTHOR_IDS; 
+    const authorNamesStr = req.body.AUTHOR_NAMES;
+    delete req.body.AUTHOR_NAMES; 
     
     try {
         const title = req.body.TITLE;
@@ -150,9 +163,10 @@ exports.createBook = async (req, res, next) => {
         const result = await db.execute(insertSql, [isbn, title, catId, pubId, price, edition, year]);
         const newBookId = result.rows[0].BOOKID || result.rows[0].bookid;
 
-        if (authorIdsStr) {
-            const authorIds = authorIdsStr.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
-            for (const aId of authorIds) {
+        if (authorNamesStr) {
+            const authorNames = authorNamesStr.split(/,|and/).map(n => n.trim()).filter(n => n);
+            for (const aName of authorNames) {
+                const aId = await getOrCreateAuthor(aName);
                 await db.execute('INSERT INTO WRITTEN_BY (BookID, AuthorID) VALUES ($1, $2) ON CONFLICT DO NOTHING', [newBookId, aId]);
             }
         }
@@ -164,8 +178,8 @@ exports.createBook = async (req, res, next) => {
 };
 
 exports.updateBook = async (req, res, next) => {
-    const authorIdsStr = req.body.AUTHOR_IDS;
-    delete req.body.AUTHOR_IDS; 
+    const authorNamesStr = req.body.AUTHOR_NAMES;
+    delete req.body.AUTHOR_NAMES; 
     const bookId = req.params.id;
 
     try {
@@ -186,11 +200,12 @@ exports.updateBook = async (req, res, next) => {
             await db.execute(sql, vals);
         }
 
-        if (authorIdsStr !== undefined) {
+        if (authorNamesStr !== undefined) {
             await db.execute('DELETE FROM WRITTEN_BY WHERE BookID = $1', [bookId]);
-            if (authorIdsStr.trim() !== '') {
-                const authorIds = authorIdsStr.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
-                for (const aId of authorIds) {
+            if (authorNamesStr.trim() !== '') {
+                const authorNames = authorNamesStr.split(/,|and/).map(n => n.trim()).filter(n => n);
+                for (const aName of authorNames) {
+                    const aId = await getOrCreateAuthor(aName);
                     await db.execute('INSERT INTO WRITTEN_BY (BookID, AuthorID) VALUES ($1, $2) ON CONFLICT DO NOTHING', [bookId, aId]);
                 }
             }
