@@ -33,9 +33,9 @@ function App() {
       <Routes>
         <Route path="/" element={<ProtectedLayout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard module="dashboard" />} />
+          <Route path="dashboard" element={<Dashboard />} />
           {Object.entries(schemas).map(([key, schema]) => (
-            <Route key={key} path={key} element={<Dashboard module={key} schema={schema} />} />
+            <Route key={key} path={key} element={<CrudPage schema={schema} />} />
           ))}
           <Route path="*" element={<div className="p-8 text-center text-xl font-medium text-gray-500">404 - Page Not Found</div>} />
         </Route>

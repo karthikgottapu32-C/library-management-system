@@ -35,7 +35,6 @@ router.post('/auth/login', (req, res) => {
 router.use(requireAuth);
 
 router.get('/dashboard/summary', dashboard.getStats);
-router.get('/dashboard/context', dashboard.getContextStats);
 router.get('/dashboard/recent-loans', dashboard.getRecentLoans);
 router.get('/dashboard/recent-reservations', dashboard.getRecentReservations);
 router.get('/dashboard/recent-books', dashboard.getRecentBooks);
