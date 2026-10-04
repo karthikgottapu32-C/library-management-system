@@ -23,7 +23,11 @@ export default function LoginPage({ onLogin }) {
         navigate('/dashboard', { replace: true });
       }
     } catch (e) {
-      setError('Invalid username or password.');
+      if (e.response && e.response.status === 401) {
+        setError('Invalid username or password.');
+      } else {
+        setError('Cannot connect to the server. Is the backend running?');
+      }
     }
   };
 
