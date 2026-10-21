@@ -15,15 +15,9 @@ services:
         value: 22.14.0
       - key: DATABASE_URL
         sync: false
-      - key: PGSSL_CA
-        sync: false
-      - key: SUPABASE_URL
-        sync: false
-      - key: ADMIN_EMAILS
-        sync: false
-      - key: VITE_SUPABASE_URL
-        sync: false
-      - key: VITE_SUPABASE_ANON_KEY
-        sync: false
       - key: PGPOOL_MAX
         value: 5
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
+        sync: false
