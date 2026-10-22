@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Plus, Edit, Trash2, X, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, X, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight, Eye, QrCode, CreditCard, Copy, Check } from 'lucide-react';
 
 const STATUS_COLORS = {
   Active:     'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
@@ -69,6 +69,57 @@ export default function CrudPage({ schema }) {
   const [refData, setRefData] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState(null);
+
+  // Fine Payment QR Modal state
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [payingItem, setPayingItem] = useState(null);
+  const [paymentMode, setPaymentMode] = useState('UPI / QR Code');
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
+
+  const openPaymentModal = (item) => {
+    setPayingItem(item);
+    setPaymentMode('UPI / QR Code');
+    setCopiedLink(false);
+    setPaymentModalOpen(true);
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!payingItem) return;
+    setProcessingPayment(true);
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const amount = Number(payingItem.FINEAMOUNT) || 0;
+
+      // 1. Record payment in PAYMENT table
+      await api.post('/payments', {
+        FINEID: payingItem.FINEID,
+        MEMBERID: payingItem.MEMBERID,
+        AMOUNT: amount,
+        PAYMENTDATE: today,
+        PAYMENTMODE: paymentMode || 'UPI / QR Code'
+      });
+
+      // 2. Mark Fine status as Paid
+      try {
+        await api.put(`/fines/${payingItem.FINEID}`, {
+          ...payingItem,
+          FINESTATUS: 'Paid'
+        });
+      } catch {
+        // Ignored if DB trigger already updated it
+      }
+
+      showToast(`Payment of ₹${amount} received! Fine #${payingItem.FINEID} marked as Paid.`);
+      setPaymentModalOpen(false);
+      setPayingItem(null);
+      fetchData(search, page);
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Payment confirmation failed', 'error');
+    } finally {
+      setProcessingPayment(false);
+    }
+  };
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
@@ -205,6 +256,26 @@ export default function CrudPage({ schema }) {
   const formatCell = (item, col) => {
     const val = item[col.key];
     if (val == null || val === '') return <span className="text-white/20">—</span>;
+    if (col.key === 'FINESTATUS') {
+      return (
+        <div className="flex items-center gap-2">
+          <StatusBadge value={val} />
+          {schema.endpoint === 'fines' && val === 'Unpaid' && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                openPaymentModal(item);
+              }}
+              className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold text-emerald-300 bg-emerald-500/15 hover:bg-emerald-500/30 border border-emerald-500/30 transition-all interactive shadow-sm"
+              title="Click to Pay Fine with QR Code"
+            >
+              <QrCode className="w-3 h-3" />
+              <span>Pay</span>
+            </button>
+          )}
+        </div>
+      );
+    }
     if (isStatusKey(col.key)) return <StatusBadge value={val} />;
     if (isDateKey(col.key)) {
       try { return <span className="text-white/50">{new Date(val).toLocaleDateString()}</span>; }
@@ -317,8 +388,17 @@ export default function CrudPage({ schema }) {
                     </td>
                   ))}
                   <td className="px-5 py-3">
-                    <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      
+                    <div className="flex justify-end items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {schema.endpoint === 'fines' && item.FINESTATUS !== 'Paid' && (
+                        <button
+                          onClick={() => openPaymentModal(item)}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-emerald-300 bg-emerald-500/20 hover:bg-emerald-500/35 border border-emerald-500/40 transition-colors interactive mr-1"
+                          title="Pay Fine via QR Code"
+                        >
+                          <QrCode className="w-3.5 h-3.5" />
+                          <span>Pay Fine</span>
+                        </button>
+                      )}
                       <button
                         onClick={() => {
                           setViewingItem(item);
@@ -338,12 +418,14 @@ export default function CrudPage({ schema }) {
                       <button
                         onClick={() => openModal(item)}
                         className="p-1.5 rounded-lg text-indigo-400 hover:bg-indigo-500/10 transition-colors interactive"
+                        title="Edit"
                       >
                         <Edit className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => handleDelete(item)}
                         className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors interactive"
+                        title="Delete"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -592,6 +674,146 @@ export default function CrudPage({ schema }) {
                     />
                   )}
                   {submitting ? 'Saving…' : 'Save Record'}
+                </motion.button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Payment & QR Code Modal */}
+      <AnimatePresence>
+        {paymentModalOpen && payingItem && (
+          <div className="fixed inset-0 flex items-center justify-center z-[9996] p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setPaymentModalOpen(false)}
+              className="absolute inset-0 backdrop-blur-md"
+              style={{ background: 'rgba(0,0,0,0.75)' }}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+              className="relative z-10 w-full max-w-md rounded-2xl overflow-hidden flex flex-col"
+              style={{ background: '#0e0e1a', border: '1px solid rgba(16,185,129,0.3)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.7), 0 0 40px rgba(16,185,129,0.15)' }}
+            >
+              {/* Header */}
+              <div
+                className="flex items-center justify-between px-6 py-4"
+                style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'linear-gradient(to right, rgba(16,185,129,0.1), transparent)' }}
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                    <QrCode className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white text-base">Pay Fine via QR Code</h3>
+                    <p className="text-[11px] text-white/40">Fine #{payingItem.FINEID} • Member #{payingItem.MEMBERID}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setPaymentModalOpen(false)}
+                  className="p-1.5 rounded-lg text-white/30 hover:text-white hover:bg-white/5 transition-colors interactive"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="p-6 flex flex-col items-center text-center space-y-4">
+                {/* Amount Due Card */}
+                <div className="w-full py-3 px-4 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-between">
+                  <span className="text-xs text-white/50 uppercase tracking-wider font-semibold">Total Due</span>
+                  <span className="text-2xl font-black text-emerald-400">₹{payingItem.FINEAMOUNT || '0.00'}</span>
+                </div>
+
+                {/* QR Code Frame */}
+                <div className="p-3.5 bg-white rounded-2xl shadow-xl flex flex-col items-center">
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=2&data=${encodeURIComponent(`upi://pay?pa=library@upi&pn=Central+Library&am=${payingItem.FINEAMOUNT || 0}&tn=Fine-${payingItem.FINEID}`)}`}
+                    alt="Scan to Pay Fine"
+                    className="w-44 h-44 object-contain rounded-lg"
+                  />
+                  <span className="text-[11px] font-semibold text-slate-700 mt-1 flex items-center gap-1">
+                    <CreditCard className="w-3 h-3 text-emerald-600" />
+                    Scan with GPay / PhonePe / Paytm / Any UPI App
+                  </span>
+                </div>
+
+                {/* Payment Path / URI */}
+                <div className="w-full text-left space-y-1.5">
+                  <label className="text-[11px] font-medium text-white/40 uppercase tracking-wider">Payment Path / UPI URI</label>
+                  <div className="flex items-center gap-2 p-2 rounded-xl bg-black/40 border border-white/10">
+                    <input
+                      readOnly
+                      value={`upi://pay?pa=library@upi&pn=Central+Library&am=${payingItem.FINEAMOUNT || 0}&tn=Fine-${payingItem.FINEID}`}
+                      className="w-full bg-transparent text-xs text-white/70 font-mono focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`upi://pay?pa=library@upi&pn=Central+Library&am=${payingItem.FINEAMOUNT || 0}&tn=Fine-${payingItem.FINEID}`);
+                        setCopiedLink(true);
+                        setTimeout(() => setCopiedLink(false), 2500);
+                      }}
+                      className="px-2.5 py-1 rounded-lg text-xs font-medium text-indigo-300 bg-indigo-500/20 hover:bg-indigo-500/30 flex items-center gap-1 transition-colors flex-shrink-0"
+                    >
+                      {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedLink ? 'Copied' : 'Copy'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Payment Mode Selector */}
+                <div className="w-full text-left space-y-1.5">
+                  <label className="text-[11px] font-medium text-white/40 uppercase tracking-wider">Payment Mode</label>
+                  <select
+                    value={paymentMode}
+                    onChange={(e) => setPaymentMode(e.target.value)}
+                    className="w-full h-9 rounded-xl px-3 text-xs text-white/80 focus:outline-none"
+                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                  >
+                    <option value="UPI / QR Code" style={{ background: '#0c0c18' }}>UPI / QR Code</option>
+                    <option value="Online Transfer" style={{ background: '#0c0c18' }}>Online Transfer</option>
+                    <option value="Credit Card" style={{ background: '#0c0c18' }}>Credit Card</option>
+                    <option value="Debit Card" style={{ background: '#0c0c18' }}>Debit Card</option>
+                    <option value="Cash" style={{ background: '#0c0c18' }}>Cash</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div
+                className="flex items-center justify-end gap-3 px-6 py-4"
+                style={{ borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.3)' }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setPaymentModalOpen(false)}
+                  className="h-9 px-4 rounded-xl text-xs text-white/50 hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleConfirmPayment}
+                  disabled={processingPayment}
+                  className="h-9 px-5 rounded-xl text-xs font-semibold text-white flex items-center gap-2 shadow-lg disabled:opacity-50 interactive"
+                  style={{ background: 'linear-gradient(135deg,#10b981,#059669)', boxShadow: '0 0 20px rgba(16,185,129,0.3)' }}
+                >
+                  {processingPayment && (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 0.7, repeat: Infinity, ease: 'linear' }}
+                      className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full"
+                    />
+                  )}
+                  {processingPayment ? 'Confirming…' : 'Confirm Payment & Mark Paid'}
                 </motion.button>
               </div>
             </motion.div>
