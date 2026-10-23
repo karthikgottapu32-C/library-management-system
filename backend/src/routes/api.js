@@ -84,6 +84,14 @@ entities.forEach(ent => {
         router.put('/publishers/:id', ctrl.update);
         router.delete('/publishers/:id', ctrl.delete);
         router.post('/publishers', ctrl.create);
+    } else if (ent.route === 'fines') {
+        router.get('/fines', advanced.getFinesDetailed);
+        router.get('/fines-detailed', advanced.getFinesDetailed);
+        router.post('/fines/:id/pay', advanced.payFine);
+        router.get('/fines/:id', ctrl.getById);
+        router.put('/fines/:id', ctrl.update);
+        router.delete('/fines/:id', ctrl.delete);
+        router.post('/fines', ctrl.create);
     } else {
         router.get(`/${ent.route}`, ctrl.getAll);
         if (Array.isArray(ent.pk)) {

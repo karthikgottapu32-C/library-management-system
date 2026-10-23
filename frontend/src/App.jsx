@@ -4,6 +4,7 @@ import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
 import CrudPage from './components/tables/CrudPage';
 import LoginPage from './pages/LoginPage';
+import FinesPaymentsPage from './pages/FinesPaymentsPage';
 import { schemas } from './utils/schema';
 
 function App() {
@@ -34,9 +35,13 @@ function App() {
         <Route path="/" element={<ProtectedLayout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
-          {Object.entries(schemas).map(([key, schema]) => (
-            <Route key={key} path={key} element={<CrudPage schema={schema} />} />
-          ))}
+          <Route path="fines" element={<FinesPaymentsPage />} />
+          <Route path="payments" element={<FinesPaymentsPage />} />
+          {Object.entries(schemas)
+            .filter(([key]) => key !== 'fines' && key !== 'payments')
+            .map(([key, schema]) => (
+              <Route key={key} path={key} element={<CrudPage schema={schema} />} />
+            ))}
           <Route path="*" element={<div className="p-8 text-center text-xl font-medium text-gray-500">404 - Page Not Found</div>} />
         </Route>
       </Routes>

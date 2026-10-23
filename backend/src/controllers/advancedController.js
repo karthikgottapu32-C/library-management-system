@@ -148,7 +148,6 @@ exports.createBook = async (req, res, next) => {
         const edition = req.body.EDITION || null;
         const year = req.body.PUBLISHYEAR || null;
 
-        // Auto-create category if CATEGORYNAME is provided instead of ID
         if (req.body.CATEGORYNAME) {
             catId = await getOrCreateCategory(req.body.CATEGORYNAME);
         }
@@ -279,5 +278,180 @@ exports.globalSearch = async (req, res) => {
         res.json({ success: true, data: results });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.getFinesDetailed = async (req, res) => {
+    try {
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const limit = Math.min(500, Math.max(1, parseInt(req.query.limit, 10) || 100));
+        const offset = (page - 1) * limit;
+
+        let whereConditions = [];
+        let binds = [limit, offset];
+        let pIdx = 3;
+
+        if (req.query.status && req.query.status !== 'all') {
+            whereConditions.push(`F.FineStatus ILIKE $${pIdx}`);
+            binds.push(req.query.status.trim());
+            pIdx++;
+        }
+
+        if (req.query.search && req.query.search.trim() !== '') {
+            const s = `%${req.query.search.trim()}%`;
+            const sNum = parseInt(req.query.search.trim(), 10);
+            let searchConds = [
+                `M.MemberName ILIKE $${pIdx}`,
+                `B.Title ILIKE $${pIdx}`,
+                `F.FineStatus ILIKE $${pIdx}`
+            ];
+            if (!isNaN(sNum)) {
+                searchConds.push(`F.FineID = ${sNum}`);
+                searchConds.push(`F.MemberID = ${sNum}`);
+                searchConds.push(`F.LoanID = ${sNum}`);
+            }
+            whereConditions.push(`(${searchConds.join(' OR ')})`);
+            binds.push(s);
+            pIdx++;
+        }
+
+        const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+
+        const sql = `
+            SELECT 
+                F.FineID AS FINEID,
+                F.LoanID AS LOANID,
+                F.MemberID AS MEMBERID,
+                COALESCE(M.MemberName, 'Member #' || F.MemberID) AS MEMBERNAME,
+                M.Email AS MEMBEREMAIL,
+                M.Phone AS MEMBERPHONE,
+                M.MemberType AS MEMBERTYPE,
+                F.FineAmount AS FINEAMOUNT,
+                F.FineDate AS FINEDATE,
+                F.FineStatus AS FINESTATUS,
+                B.BookID AS BOOKID,
+                COALESCE(B.Title, 'Library Loan Item #' || F.LoanID) AS BOOKTITLE,
+                B.ISBN AS ISBN,
+                L.IssueDate AS ISSUEDATE,
+                L.DueDate AS DUEDATE,
+                L.ReturnDate AS RETURNDATE,
+                L.Status AS LOANSTATUS,
+                P.PaymentID AS PAYMENTID,
+                P.PaymentDate AS PAYMENTDATE,
+                P.PaymentMode AS PAYMENTMODE,
+                P.Amount AS PAIDAMOUNT
+            FROM FINE F
+            LEFT JOIN MEMBER M ON F.MemberID = M.MemberID
+            LEFT JOIN LOAN L ON F.LoanID = L.LoanID
+            LEFT JOIN BOOK_COPY BC ON L.CopyID = BC.CopyID
+            LEFT JOIN BOOK B ON BC.BookID = B.BookID
+            LEFT JOIN LATERAL (
+                SELECT PaymentID, PaymentDate, PaymentMode, Amount 
+                FROM PAYMENT 
+                WHERE FineID = F.FineID 
+                ORDER BY PaymentID DESC 
+                LIMIT 1
+            ) P ON TRUE
+            ${whereClause}
+            ORDER BY F.FineID DESC
+            LIMIT $1 OFFSET $2
+        `;
+
+        const result = await db.execute(sql, binds);
+        res.json({ success: true, data: result.rows, page, limit });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.payFine = async (req, res) => {
+    const fineId = parseInt(req.params.id, 10);
+    const { paymentMode, transactionRef } = req.body;
+
+    if (!fineId || isNaN(fineId)) {
+        return res.status(400).json({ success: false, message: 'Valid Fine ID is required.' });
+    }
+
+    try {
+        // 1. Fetch fine record from database (Server-side validation)
+        const checkSql = `
+            SELECT 
+                F.FineID AS FINEID,
+                F.LoanID AS LOANID,
+                F.MemberID AS MEMBERID,
+                F.FineAmount AS FINEAMOUNT,
+                F.FineStatus AS FINESTATUS,
+                M.MemberName AS MEMBERNAME,
+                M.Email AS MEMBEREMAIL,
+                B.Title AS BOOKTITLE
+            FROM FINE F
+            LEFT JOIN MEMBER M ON F.MemberID = M.MemberID
+            LEFT JOIN LOAN L ON F.LoanID = L.LoanID
+            LEFT JOIN BOOK_COPY BC ON L.CopyID = BC.CopyID
+            LEFT JOIN BOOK B ON BC.BookID = B.BookID
+            WHERE F.FineID = $1
+        `;
+        const checkRes = await db.execute(checkSql, [fineId]);
+
+        if (checkRes.rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Fine record not found.' });
+        }
+
+        const fine = checkRes.rows[0];
+
+        // 2. Prevent duplicate payment if already paid
+        if (fine.FINESTATUS === 'Paid') {
+            return res.status(400).json({ success: false, message: 'This fine has already been paid.' });
+        }
+
+        const amount = Number(fine.FINEAMOUNT);
+        if (isNaN(amount) || amount <= 0) {
+            return res.status(400).json({ success: false, message: 'Invalid fine amount. Cannot process non-positive payment.' });
+        }
+
+        const mode = paymentMode && paymentMode.trim() ? paymentMode.trim() : 'UPI / QR Code';
+        const refId = transactionRef && transactionRef.trim() 
+            ? transactionRef.trim() 
+            : `UPI-${Date.now().toString(36).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+        // 3. Insert record into PAYMENT table
+        const insertSql = `
+            INSERT INTO PAYMENT (FineID, MemberID, Amount, PaymentDate, PaymentMode)
+            VALUES ($1, $2, $3, CURRENT_TIMESTAMP, $4)
+            RETURNING PaymentID, PaymentDate
+        `;
+        const insertRes = await db.execute(insertSql, [fine.FINEID, fine.MEMBERID, amount, mode]);
+        const paymentId = insertRes.rows && insertRes.rows[0] ? insertRes.rows[0].PAYMENTID : Math.floor(1000 + Math.random() * 9000);
+        const paymentDate = insertRes.rows && insertRes.rows[0] ? insertRes.rows[0].PAYMENTDATE : new Date().toISOString();
+
+        // 4. Update Fine status to Paid
+        const updateSql = `UPDATE FINE SET FineStatus = 'Paid' WHERE FineID = $1`;
+        await db.execute(updateSql, [fine.FINEID]);
+
+        // 5. Generate official Receipt number
+        const receiptNo = `REC-${new Date().getFullYear()}-${String(paymentId).padStart(5, '0')}`;
+
+        res.json({
+            success: true,
+            message: 'Fine payment completed successfully.',
+            data: {
+                receiptNo,
+                paymentId,
+                transactionRef: refId,
+                fineId: fine.FINEID,
+                memberId: fine.MEMBERID,
+                memberName: fine.MEMBERNAME || `Member #${fine.MEMBERID}`,
+                memberEmail: fine.MEMBEREMAIL || '',
+                loanId: fine.LOANID,
+                bookTitle: fine.BOOKTITLE || `Loan Item #${fine.LOANID}`,
+                amount: amount,
+                paymentMode: mode,
+                paymentDate,
+                paymentStatus: 'PAID'
+            }
+        });
+    } catch (error) {
+        console.error('payFine error:', error);
+        res.status(500).json({ success: false, message: 'Payment could not be recorded. ' + error.message });
     }
 };

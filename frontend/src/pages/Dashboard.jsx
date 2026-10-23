@@ -1,35 +1,60 @@
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Book, Users, Calendar, DollarSign, AlertCircle, Building, Bookmark, BookCopy, TrendingUp, Library, RefreshCw, CheckCircle, BarChart3, ArrowLeft, PenTool, Tags } from 'lucide-react';
+import { Book, Users, Calendar, DollarSign, AlertCircle, Building, Bookmark, BookCopy, TrendingUp, Library, RefreshCw, CheckCircle, BarChart3, ArrowLeft, PenTool, Tags, Sparkles } from 'lucide-react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import CrudPage from '../components/tables/CrudPage';
+import Hero3D from '../components/dashboard/Hero3D';
 import { schemas } from '../utils/schema';
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.07, delayChildren: 0.1 } }
+  visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.08 } }
 };
 
 const cardVariants = {
-  hidden: { opacity: 0, y: 24, scale: 0.97 },
+  hidden: { opacity: 0, y: 20, scale: 0.96 },
   visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 260, damping: 22 } }
 };
 
 const tableVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } }
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } }
 };
 
 function StatCard({ title, value, icon: Icon, gradient, delay, onClick, active }) {
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = (e) => {
+    const card = e.currentTarget;
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = ((y - centerY) / centerY) * -8;
+    const rotateY = ((x - centerX) / centerX) * 8;
+    setTilt({ x: rotateX, y: rotateY });
+  };
+
+  const handleMouseLeave = () => {
+    setTilt({ x: 0, y: 0 });
+  };
+
   return (
     <motion.div
       variants={cardVariants}
-      whileHover={{ y: -4, scale: 1.02 }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
       onClick={onClick}
-      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+      style={{
+        perspective: '1000px',
+        transform: `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
+        transition: 'transform 0.12s ease-out',
+        background: active ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)',
+        border: '1px solid rgba(255,255,255,0.08)'
+      }}
       className={`relative overflow-hidden rounded-2xl p-5 group cursor-pointer transition-all duration-300 ${active ? 'ring-2 ring-indigo-400 ring-offset-2 ring-offset-[#0f111a]' : 'hover:ring-1 hover:ring-white/20'}`}
-      style={{ background: active ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
     >
       <div
         className={`absolute -top-6 -right-6 w-24 h-24 rounded-full blur-2xl transition-opacity duration-500 ${active ? 'opacity-60' : 'opacity-20 group-hover:opacity-40'}`}
@@ -206,17 +231,38 @@ function DashboardContent() {
 
   return (
     <div>
-      <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-extrabold text-white mb-1 flex items-center gap-2">
-            <Library className="w-7 h-7 text-indigo-400" />
+      {/* 3D Hero Command Center Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: -12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8 relative overflow-hidden rounded-3xl p-6 bg-gradient-to-r from-indigo-950/40 via-purple-950/20 to-transparent border border-white/10 flex items-center justify-between"
+      >
+        <div className="relative z-10 max-w-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-indigo-400" /> 3D Digital System
+            </span>
+          </div>
+          <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-2">
+            <Library className="w-8 h-8 text-indigo-400" />
             Library Dashboard
           </h1>
-          <p className="text-white/40 text-sm">Real-time overview of your library system</p>
+          <p className="text-white/50 text-xs mt-1 leading-relaxed">
+            Real-time circulation metrics, digital cataloging, member monitoring, and automated fine settlements.
+          </p>
         </div>
-        <button onClick={fetchGlobalData} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white text-sm transition-all interactive">
-          <RefreshCw className="w-4 h-4" /> Refresh
-        </button>
+
+        {/* 3D Floating Books Element */}
+        <Hero3D />
+
+        <div className="relative z-10">
+          <button
+            onClick={fetchGlobalData}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white text-xs font-semibold transition-all backdrop-blur-md shadow-lg"
+          >
+            <RefreshCw className="w-3.5 h-3.5" /> Refresh
+          </button>
+        </div>
       </motion.div>
 
       <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
